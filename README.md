@@ -9,3 +9,16 @@ Look at quotes which are given more media coverage (must choose in terms of numO
 
 IDEA 2:
 Try to look at correlations between the stock market and quotes (in terms of date, argument discussed, ...)
+
+
+
+Please use the following repository structure:
+
+- Cache [dir]: Contains output files from long computations.
+- Data [dir]: Contains the dataset as provided by the course. Includes quotebank's json files and the speaker attributes parquet file.
+- Data Analysis [jupyter notebook]: The jupyter on which the analysis takes place. May be worth duplicating multiple times at the beginning such that each person has its own and we avoid git conflicts.
+
+- Are we allowed to organize our code as to have external .py files? Because it sure will be a mess if we put all function definitions in the jupyter, but if we must, we will.
+
+NOTE: we can sync Data and Cache folder using google drive. Normalement j'ai partagé avec vous un lien à mon espace de stockage epfl, sur votre mail epfl.
+Par contre, si on se trompe et on efface accidentellement un fichier cache qui prend long à tourner, il n'est pas backed up. Du coup il est perdu et faudra le rerun.
