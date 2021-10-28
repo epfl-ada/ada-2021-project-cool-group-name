@@ -1,5 +1,7 @@
 import os
 import pickle
+import requests
+import re
 
 def recursive_std_types_to_tuple(obj):
     if isinstance(obj, (int, float, str)):
@@ -67,3 +69,27 @@ def cache_to_file_pickle(filename, cache_dir = 'Cache', ignore_kwargs = None):
         return wrapper
     
     return decorator
+
+
+def get_labels_of_wikidata_ids(ids):    
+    sparql_query = """
+        SELECT ?item ?itemLabel
+        WHERE {
+            VALUES ?item {""" + ' '.join(['wd:' + elem for elem in ids]) + """}
+            SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+        }
+    """
+
+    url = 'https://query.wikidata.org/sparql'
+
+    data = requests.get(url, params = {'format': 'json', 'query': sparql_query}).json()
+    
+    items_and_labels = data['results']['bindings']
+    
+    mapping = {}
+    for result in items_and_labels:
+        item = re.sub(r".*[#/\\]", "", result['item']['value'])
+        label = result['itemLabel']['value']
+        mapping[item] = label
+    
+    return mapping
