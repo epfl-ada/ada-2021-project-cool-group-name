@@ -234,3 +234,33 @@ def process_json_file_per_line(input_file_path,
         print(f"Finished processing {input_file_path} in {(time.time() - start_time) / 60:.3f} minutes")
         
     return processed_lines if return_processed_lines_list else None
+
+
+
+def all_quotes_generator(data_dir, print_progress_every = 1000000):
+    # Sanity check of 'print_progress_every' parameter.
+    if print_progress_every is not None:
+        if not isinstance(print_progress_every, int) or print_progress_every <= 0:
+            raise ValueError("Parameter 'print_progress_every' is expected to be a strictly positive integer, or None.")
+           
+    filenames = [filename for filename in os.listdir(data_dir) if filename.endswith('.json.bz2')]
+    input_files_paths = [os.path.join(data_dir, filename) for filename in filenames]
+        
+    # Parsing and yielding lines.
+    for input_file_path in input_files_paths:
+        start_time = time.time()
+        
+        with bz2.open(input_file_path, 'rb') as input_file:
+
+            print(f'Starting processing {input_file_path}')
+
+            for i, line in enumerate(input_file):
+                line = json.loads(line)
+
+                yield line
+                
+                if i > 0 and print_progress_every is not None and not i % print_progress_every:
+                    print(f"Processed {i} lines from {input_file_path} in {(time.time() - start_time) / 60:.3f} minutes")
+
+            print(f"Finished processing {input_file_path} in {(time.time() - start_time) / 60:.3f} minutes")
+            
