@@ -6,6 +6,7 @@ import time
 import bz2
 import json
 from math import ceil
+import numpy as np
 
     
 def cache_to_file_pickle(filename, cache_dir = 'Cache', ignore_kwargs = None):
@@ -155,6 +156,9 @@ def get_labels_of_wikidata_ids(ids, chunk_size = 500, wait_between_chunks_secs =
 def str_is_qid(string):
     return bool(re.match(r"^Q\d+$", string))
         
+    
+def ragged_nested_sequence_to_set(array):
+    return set(np.hstack(array.ravel()))
     
     
     
