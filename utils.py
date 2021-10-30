@@ -77,80 +77,111 @@ def cache_to_file_pickle(filename, cache_dir = 'Cache', ignore_kwargs = None):
     return decorator
 
 
-def get_labels_of_wikidata_ids(ids, chunk_size = 500, wait_between_chunks_secs = 1):
+
+def _make_chunked_requests_wikidata(ids, sparql_query_format, value_label, chunk_size = 500, wait_between_chunks_secs = 0.5,
+                                    max_attempts = 30):
     """
-    Function querying Wikidata for human-readable English labels of the ids provided as parameters.
+    Function querying Wikidata for some property of provided ids provided as parameters.
+    The query used must be provided as well as the label of the desired property used in the query.
     To avoid the server refusing requests, the ids are split into chuncks of desired size and a
     different request is made for each chunk, waiting a certain amount of time between requests.
     
     Params:
-         ids::[iterable]
-            The Wikidata ids we want to obtain a human-readable English label of.
-         chunk_size::[float]
+        ids::[iterable]
+            The Wikidata ids we want to obtain a property of.
+        sparql_query_format::[str.format]
+             
+         
+         
+        value_label::[str]
+            Label of property used in sparql query (needed to retrieve value from bindings in json).
+        chunk_size::[float]
             The number of Wikidata ids we want to send in each request. Larger values cause less requests
             to be sent and thus generally lower execution times, but also increase the chance of Wikidata
             not answering the request.
         wait_between_chunks_secs::[float]
             Number of seconds to wait between consecutive requests to Wikidata. A large enough
             value for this parameter ensures Wikidata will not stop answering requests from our machine.
+        max_attempts::[int]
+        
+        
+        
+        
+           
             
     Returns:
         mapping::[dict]
-            Dictionary with keys the Wikidata ids and values the English label for each id.
+            Dictionary with keys the Wikidata ids and values the value of the requested property for each id.
     
-    """
-    
-    
-    def request_labels_of_wikidata_ids_one_chunk(ids):
-        """
-        Function querying Wikidata for human-readable English labels of the ids provided as parameters.
-        All labels are queried in a single request.
-        
-        Params:
-            ids::[iterable]
-                The Wikidata ids we want to obtain a human-readable English label of.
-        Returns:
-            items_and_labels::[list[dict]]
-                List of dictionary as returned by Wikidata. Can be parsed to extract the label for of the requested ids.
-
-        """
-        
-        sparql_query = """SELECT ?item ?itemLabel
-                          WHERE {
-                              VALUES ?item {""" + ' '.join(['wd:' + elem for elem in ids]) + """}
-                              SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
-                          }"""
-
-        url = 'https://query.wikidata.org/sparql'
-
-        data = requests.get(url, params = {'format': 'json', 'query': sparql_query}).json()
-
-        items_and_labels = data['results']['bindings']
-
-        return items_and_labels
-    
+    """    
     
     # Removing duplicates and coverting to list.
     ids = list(set(ids))
     
+    url = 'https://query.wikidata.org/sparql'
+    
     mapping = {}
-    for start_idx in range(0, len(ids), chunk_size):
+    for start_idx in range(0, len(ids), chunk_size):  
         # Wait some time before sending requests to avoid spamming the server.
         time.sleep(wait_between_chunks_secs)
         
         # Query Wikidata for current chunk.
-        items_and_labels = request_labels_of_wikidata_ids_one_chunk(ids[start_idx:start_idx + chunk_size])
+        sparql_query = sparql_query_format(' '.join(f'wd:{qid}' for qid in ids[start_idx:start_idx + chunk_size]))
         
+        data = None
+        for attempts in range(max_attempts):
+            try:
+                data = requests.get(url, params = {'format': 'json', 'query': sparql_query}).json()
+                
+                # If success, break out of loop.
+                break
+            
+            except (json.JSONDecodeError, requests.exceptions.RequestException) as e:
+                # In case of error, do nothing but retrying.
+                pass
+              
+        if data is None:
+            raise RuntimeError(f"Wikidata query failed more than {max_attempts} times.")
+                
         # Update mapping of ids to labels. 
-        for result in items_and_labels:
+        for result in data['results']['bindings']:
             item = re.sub(r".*[#/\\]", "", result['item']['value'])
-            label = result['itemLabel']['value']
+            value = result[value_label]['value']
             
-            # Filter out qids for which label is unknown: in this case Wikidata returns the qid itself as label.
-            if not str_is_qid(label):
-                mapping[item] = label
-            
+            # Filter out qids for which value is unknown (useful if value is the qid label as in this case 
+            # Wikidata returns the qid itself as label).
+            if not str_is_qid(value):
+                mapping[item] = value
+                
     return mapping
+                
+           
+@cache_to_file_pickle("function-get_labels_of_wikidata_ids", 
+                      ignore_kwargs = ["chunk_size", "wait_between_chunks_secs", "max_attempts"])
+def get_labels_of_wikidata_ids(ids, *args, **kwargs):
+    """Function querying Wikidata for human-readable English labels of the ids provided as parameters.
+    To avoid the server refusing requests, the ids are split into chuncks of desired size and a
+    different request is made for each chunk, waiting a certain amount of time between requests."""
+    
+    sparql_query_format = """SELECT ?item ?itemLabel
+                             WHERE {{
+                                 VALUES ?item {{ {} }}
+                                 SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en". }}
+                             }}""".format
+                                           
+    return _make_chunked_requests_wikidata(ids, sparql_query_format, 'itemLabel', *args, **kwargs)
+                                           
+
+@cache_to_file_pickle("function-get_link_counts_of_wikidata_ids", 
+                      ignore_kwargs = ["chunk_size", "wait_between_chunks_secs", "max_attempts"])
+def get_link_counts_of_wikidata_ids(ids, *args, **kwargs):
+    sparql_query_format = """SELECT ?item ?linkcount
+                             WHERE {{
+                                 VALUES ?item {{ {} }}
+                                 ?item wikibase:sitelinks ?linkcount.
+                             }}""".format
+   
+    return _make_chunked_requests_wikidata(ids, sparql_query_format, 'linkcount', *args, **kwargs)
 
 
 def str_is_qid(string):
@@ -158,7 +189,7 @@ def str_is_qid(string):
         
     
 def ragged_nested_sequence_to_set(array):
-    return set(np.hstack(array.ravel()))
+    return set(np.hstack(np.array(array, dtype = 'object').ravel()))
     
     
     
