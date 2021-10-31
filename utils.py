@@ -7,6 +7,7 @@ import bz2
 import json
 from math import ceil
 import numpy as np
+from random import random
 
     
 def cache_to_file_pickle(filename, cache_dir = 'Cache', ignore_kwargs = None):
@@ -237,12 +238,16 @@ def process_json_file_per_line(input_file_path,
 
 
 
-def all_quotes_generator(data_dir, print_progress_every = 1000000):
+def all_quotes_generator(data_dir, downsampling_factor = 1, print_progress_every = 1000000):
+    # Sanity check of 'downsampling_factor' parameter.
+    if downsampling_factor < 1:
+        raise ValueError("Parameter 'downsampling_factor' is expected to be a number >= 1.")
+      
     # Sanity check of 'print_progress_every' parameter.
     if print_progress_every is not None:
         if not isinstance(print_progress_every, int) or print_progress_every <= 0:
             raise ValueError("Parameter 'print_progress_every' is expected to be a strictly positive integer, or None.")
-           
+    
     filenames = [filename for filename in os.listdir(data_dir) if filename.endswith('.json.bz2')]
     input_files_paths = [os.path.join(data_dir, filename) for filename in filenames]
         
@@ -255,10 +260,11 @@ def all_quotes_generator(data_dir, print_progress_every = 1000000):
             print(f'Starting processing {input_file_path}')
 
             for i, line in enumerate(input_file):
-                line = json.loads(line)
+                # Yield only approximately num_tot_elems / downsampling_factor elements.
+                if random() < 1 / downsampling_factor:
+                    line = json.loads(line)
+                    yield line
 
-                yield line
-                
                 if i > 0 and print_progress_every is not None and not i % print_progress_every:
                     print(f"Processed {i} lines from {input_file_path} in {(time.time() - start_time) / 60:.3f} minutes")
 
