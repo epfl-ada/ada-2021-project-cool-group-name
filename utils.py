@@ -7,7 +7,6 @@ import bz2
 import json
 from math import ceil
 import numpy as np
-from random import random
 
     
 def cache_to_file_pickle(filename, cache_dir = 'Cache', ignore_kwargs = None):
@@ -79,8 +78,8 @@ def cache_to_file_pickle(filename, cache_dir = 'Cache', ignore_kwargs = None):
 
 
 
-def _make_chunked_requests_wikidata(ids, sparql_query_format, value_label, chunk_size = 500, wait_between_chunks_secs = 0.5,
-                                    max_attempts = 30):
+def _make_chunked_requests_wikidata(ids, sparql_query_format, value_label, chunk_size = 500, wait_between_chunks_secs = 0.1,
+                                    max_attempts = 1000):
     """
     Function querying Wikidata for some property of provided ids provided as parameters.
     The query used must be provided as well as the label of the desired property used in the query.
@@ -149,7 +148,7 @@ def _make_chunked_requests_wikidata(ids, sparql_query_format, value_label, chunk
             item = re.sub(r".*[#/\\]", "", result['item']['value'])
             value = result[value_label]['value']
             
-            # Filter out qids for which value is unknown (useful if value is the qid label as in this case 
+            # Ignore qids for which value is unknown (useful if value is the qid label as in this case 
             # Wikidata returns the qid itself as label).
             if not str_is_qid(value):
                 mapping[item] = value
@@ -157,8 +156,8 @@ def _make_chunked_requests_wikidata(ids, sparql_query_format, value_label, chunk
     return mapping
                 
            
-@cache_to_file_pickle("function-get_labels_of_wikidata_ids", 
-                      ignore_kwargs = ["chunk_size", "wait_between_chunks_secs", "max_attempts"])
+#@cache_to_file_pickle("function-get_labels_of_wikidata_ids", 
+#                      ignore_kwargs = ["chunk_size", "wait_between_chunks_secs", "max_attempts"])
 def get_labels_of_wikidata_ids(ids, *args, **kwargs):
     """Function querying Wikidata for human-readable English labels of the ids provided as parameters.
     To avoid the server refusing requests, the ids are split into chuncks of desired size and a
@@ -173,8 +172,8 @@ def get_labels_of_wikidata_ids(ids, *args, **kwargs):
     return _make_chunked_requests_wikidata(ids, sparql_query_format, 'itemLabel', *args, **kwargs)
                                            
 
-@cache_to_file_pickle("function-get_link_counts_of_wikidata_ids", 
-                      ignore_kwargs = ["chunk_size", "wait_between_chunks_secs", "max_attempts"])
+#@cache_to_file_pickle("function-get_link_counts_of_wikidata_ids", 
+#                      ignore_kwargs = ["chunk_size", "wait_between_chunks_secs", "max_attempts"])
 def get_link_counts_of_wikidata_ids(ids, *args, **kwargs):
     sparql_query_format = """SELECT ?item ?linkcount
                              WHERE {{
@@ -214,7 +213,7 @@ def process_json_file_per_line(input_file_path,
     if return_processed_lines_list:
         processed_lines = []
         to_do_after_processing.append(processed_lines.append)
-           
+    
     # Parsing, processing and (if necessary) storing input file line by line.
     start_time = time.time()
     with bz2.open(input_file_path, 'rb') as input_file:
@@ -238,11 +237,7 @@ def process_json_file_per_line(input_file_path,
 
 
 
-def all_quotes_generator(data_dir, downsampling_factor = 1, print_progress_every = 1000000):
-    # Sanity check of 'downsampling_factor' parameter.
-    if downsampling_factor < 1:
-        raise ValueError("Parameter 'downsampling_factor' is expected to be a number >= 1.")
-      
+def all_quotes_generator(data_dir, print_progress_every = 1000000):  
     # Sanity check of 'print_progress_every' parameter.
     if print_progress_every is not None:
         if not isinstance(print_progress_every, int) or print_progress_every <= 0:
@@ -250,7 +245,7 @@ def all_quotes_generator(data_dir, downsampling_factor = 1, print_progress_every
     
     filenames = [filename for filename in os.listdir(data_dir) if filename.endswith('.json.bz2')]
     input_files_paths = [os.path.join(data_dir, filename) for filename in filenames]
-        
+    
     # Parsing and yielding lines.
     for input_file_path in input_files_paths:
         start_time = time.time()
@@ -260,13 +255,10 @@ def all_quotes_generator(data_dir, downsampling_factor = 1, print_progress_every
             print(f'Starting processing {input_file_path}')
 
             for i, line in enumerate(input_file):
-                # Yield only approximately num_tot_elems / downsampling_factor elements.
-                if random() < 1 / downsampling_factor:
-                    line = json.loads(line)
-                    yield line
+                line = json.loads(line)
+                yield line
 
                 if i > 0 and print_progress_every is not None and not i % print_progress_every:
                     print(f"Processed {i} lines from {input_file_path} in {(time.time() - start_time) / 60:.3f} minutes")
 
             print(f"Finished processing {input_file_path} in {(time.time() - start_time) / 60:.3f} minutes")
-            
