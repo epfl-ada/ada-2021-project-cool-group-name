@@ -156,8 +156,6 @@ def _make_chunked_requests_wikidata(ids, sparql_query_format, value_label, chunk
     return mapping
                 
            
-#@cache_to_file_pickle("function-get_labels_of_wikidata_ids", 
-#                      ignore_kwargs = ["chunk_size", "wait_between_chunks_secs", "max_attempts"])
 def get_labels_of_wikidata_ids(ids, *args, **kwargs):
     """Function querying Wikidata for human-readable English labels of the ids provided as parameters.
     To avoid the server refusing requests, the ids are split into chuncks of desired size and a
@@ -172,8 +170,6 @@ def get_labels_of_wikidata_ids(ids, *args, **kwargs):
     return _make_chunked_requests_wikidata(ids, sparql_query_format, 'itemLabel', *args, **kwargs)
                                            
 
-#@cache_to_file_pickle("function-get_link_counts_of_wikidata_ids", 
-#                      ignore_kwargs = ["chunk_size", "wait_between_chunks_secs", "max_attempts"])
 def get_link_counts_of_wikidata_ids(ids, *args, **kwargs):
     sparql_query_format = """SELECT ?item ?linkcount
                              WHERE {{
