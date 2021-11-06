@@ -5,8 +5,6 @@ import re
 import time
 import bz2
 import json
-from math import ceil
-import numpy as np
 
     
 def cache_to_file_pickle(filename, cache_dir = 'Cache', ignore_kwargs = None):
@@ -185,62 +183,30 @@ def str_is_qid(string):
         
     
 def ragged_nested_sequence_to_set(array):
-    return set(np.hstack(np.array(array, dtype = 'object').ravel()))
+    elements_set = set()
+    
+    for case in a.ravel():
+        elements_set.update(case)
+        
+    return elements_set
     
     
-    
-def process_json_file_per_line(input_file_path,
-                               func, 
-                               output_file_object = None,
-                               return_processed_lines_list = False,
-                               print_progress_every = 1000000):
-    
+
+def json_lines_generator(data_dir_or_path, print_progress_every = 1000000):  
     # Sanity check of 'print_progress_every' parameter.
     if print_progress_every is not None:
         if not isinstance(print_progress_every, int) or print_progress_every <= 0:
             raise ValueError("Parameter 'print_progress_every' is expected to be a strictly positive integer, or None.")
     
-    # Preparing variables to store processed lines in file and or in a list depending on 'output_file_object' and 
-    # 'return_processed_lines_list' parameters.
-    to_do_after_processing = []
-    if output_file_object is not None:
-        to_do_after_processing.append(lambda line: output_file_object.write((json.dumps(line) + '\n').encode('utf-8')))
-        
-    if return_processed_lines_list:
-        processed_lines = []
-        to_do_after_processing.append(processed_lines.append)
-    
-    # Parsing, processing and (if necessary) storing input file line by line.
-    start_time = time.time()
-    with bz2.open(input_file_path, 'rb') as input_file:
-        
-        print(f'Starting processing {input_file_path}')
-        
-        for i, line in enumerate(input_file):
-            line = json.loads(line)
-            
-            processed_line = func(line)
-            
-            for action in to_do_after_processing:
-                action(processed_line)
-                
-            if i > 0 and print_progress_every is not None and not i % print_progress_every:
-                print(f"Processed {i} lines from {input_file_path} in {(time.time() - start_time) / 60:.3f} minutes")
-        
-        print(f"Finished processing {input_file_path} in {(time.time() - start_time) / 60:.3f} minutes")
-        
-    return processed_lines if return_processed_lines_list else None
-
-
-
-def all_quotes_generator(data_dir, print_progress_every = 1000000):  
-    # Sanity check of 'print_progress_every' parameter.
-    if print_progress_every is not None:
-        if not isinstance(print_progress_every, int) or print_progress_every <= 0:
-            raise ValueError("Parameter 'print_progress_every' is expected to be a strictly positive integer, or None.")
-    
-    filenames = [filename for filename in os.listdir(data_dir) if filename.endswith('.json.bz2')]
-    input_files_paths = [os.path.join(data_dir, filename) for filename in filenames]
+    # Determine if data_dir_or_path is a dir, in which case list all .json.bz2 files in it, or if it is a single
+    # file, just use it.
+    if data_dir_or_path.endswith('.json.bz2'):
+        input_files_paths = [data_dir_or_path]
+    elif os.path.isdir(data_dir_or_path):
+        subfiles = [filename for filename in os.listdir(data_dir_or_path) if filename.endswith('.json.bz2')]
+        input_files_paths = [os.path.join(data_dir_or_path, filename) for filename in subfiles]
+    else:
+        raise ValueError("Parameter 'data_dir_or_path' is expected to be either the path to a .json.bz2 file or a directory")
     
     # Parsing and yielding lines.
     for input_file_path in input_files_paths:
@@ -248,7 +214,8 @@ def all_quotes_generator(data_dir, print_progress_every = 1000000):
         
         with bz2.open(input_file_path, 'rb') as input_file:
 
-            print(f'Starting processing {input_file_path}')
+            if print_progress_every is not None:
+                print(f'Starting processing {input_file_path}')
 
             for i, line in enumerate(input_file):
                 line = json.loads(line)
@@ -257,4 +224,52 @@ def all_quotes_generator(data_dir, print_progress_every = 1000000):
                 if i > 0 and print_progress_every is not None and not i % print_progress_every:
                     print(f"Processed {i} lines from {input_file_path} in {(time.time() - start_time) / 60:.3f} minutes")
 
-            print(f"Finished processing {input_file_path} in {(time.time() - start_time) / 60:.3f} minutes")
+            if print_progress_every is not None:
+                print(f"Finished processing {input_file_path} in {(time.time() - start_time) / 60:.3f} minutes")
+
+                
+@cache_to_file_pickle("utils-query_wikidata_for_linkcounts_and_labels")
+def query_wikidata_for_linkcounts_and_labels(data_dir, speaker_info_file_path, print_progress_every = 10000000):    
+    all_speakers = set()
+    speakers_needing_linkcounts = set()
+    
+    for line in json_lines_generator(data_dir, print_progress_every = print_progress_every):
+        line_qids_set = set(line['qids'])
+        
+        if len(line['qids']) > 1:
+            speakers_needing_linkcounts |= line_qids_set
+            
+        all_speakers |= line_qids_set    
+        
+    # Load part of data extracted from Wikidata dump about speakers.
+    speaker_data = pd.read_parquet(speaker_info_file_path, columns = ['id', 'label', 'gender', 'occupation'])
+    
+    # Immediately remove useless lines to save memory.
+    speaker_data = speaker_data[speaker_data['id'].isin(all_speakers)]
+        
+    # Store id-labels pairs in another variable and remove them from original dataframe.
+    speaker_qid_labels = speaker_data[['id', 'label']]
+    speaker_data.drop(columns = ['id', 'label'], inplace = True)
+        
+    # Put all qids of informations of all speakers into one single set.
+    qids_needing_labels = ragged_nested_sequence_to_set(speaker_data.values)
+    qids_needing_labels.remove(None)
+        
+    # Sanity check.
+    assert all(str_is_qid(qid) for qid in qids_needing_labels)
+
+    # Retrieve English labels for informations of all speakers. 
+    qid_labels = get_labels_of_wikidata_ids(ids = qids_needing_labels)
+    qid_labels = {k: v.title() for k, v in qid_labels.items()}
+
+    # Add speakers' id-labels pairs to qid_labels.
+    speaker_qid_labels = speaker_qid_labels[~speaker_qid_labels.isna().any(axis = 1)].set_index('id').to_dict('index')
+    speaker_qid_labels = {k: v['label'].title() for k, v in speaker_qid_labels.items()}
+    qid_labels.update(speaker_qid_labels)
+    
+    # Retrieve link counts for speakers for which we need it (used to decide which speaker is most likely being cited
+    # amongst homonyms).
+    linkcounts = get_link_counts_of_wikidata_ids(ids = speakers_needing_linkcounts)
+    linkcounts = {k: int(v) for k, v in linkcounts.items()}
+
+    return qid_labels, linkcounts
