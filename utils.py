@@ -5,6 +5,8 @@ import re
 import time
 import bz2
 import json
+import pandas as pd
+import numpy as np
 
     
 def cache_to_file_pickle(filename, cache_dir = 'Cache', ignore_kwargs = None):
@@ -185,7 +187,10 @@ def str_is_qid(string):
 def ragged_nested_sequence_to_set(array):
     elements_set = set()
     
-    for case in a.ravel():
+    for case in array.ravel():
+        if not isinstance(case, (list, tuple, np.ndarray)):
+            case = [case]
+            
         elements_set.update(case)
         
     return elements_set
@@ -227,26 +232,16 @@ def json_lines_generator(data_dir_or_path, print_progress_every = 1000000):
             if print_progress_every is not None:
                 print(f"Finished processing {input_file_path} in {(time.time() - start_time) / 60:.3f} minutes")
 
-                
-@cache_to_file_pickle("utils-query_wikidata_for_linkcounts_and_labels")
+
+@cache_to_file_pickle("utils-query_wikidata_for_linkcounts_and_labels", ignore_kwargs = ["print_progress_every"])
 def query_wikidata_for_linkcounts_and_labels(data_dir, speaker_info_file_path, print_progress_every = 10000000):    
-    all_speakers = set()
-    speakers_needing_linkcounts = set()
+    all_speakers, speakers_needing_linkcounts = _get_unique_speakers_dataset(data_dir = data_dir, 
+                                                                             print_progress_every = print_progress_every)
     
-    for line in json_lines_generator(data_dir, print_progress_every = print_progress_every):
-        line_qids_set = set(line['qids'])
-        
-        if len(line['qids']) > 1:
-            speakers_needing_linkcounts |= line_qids_set
-            
-        all_speakers |= line_qids_set    
-        
     # Load part of data extracted from Wikidata dump about speakers.
-    speaker_data = pd.read_parquet(speaker_info_file_path, columns = ['id', 'label', 'gender', 'occupation'])
-    
-    # Immediately remove useless lines to save memory.
-    speaker_data = speaker_data[speaker_data['id'].isin(all_speakers)]
-        
+    speaker_data = get_filtered_speaker_info_data(data_dir, speaker_info_file_path, columns = ['id', 'label', 'gender', 'occupation', 
+                                                                                               'nationality', 'ethnic_group', 'religion'])
+            
     # Store id-labels pairs in another variable and remove them from original dataframe.
     speaker_qid_labels = speaker_data[['id', 'label']]
     speaker_data.drop(columns = ['id', 'label'], inplace = True)
@@ -273,3 +268,26 @@ def query_wikidata_for_linkcounts_and_labels(data_dir, speaker_info_file_path, p
     linkcounts = {k: int(v) for k, v in linkcounts.items()}
 
     return qid_labels, linkcounts
+
+
+@cache_to_file_pickle("utils-_get_unique_speakers_dataset", ignore_kwargs = ["print_progress_every"])
+def _get_unique_speakers_dataset(data_dir, print_progress_every = 10000000):    
+    all_speakers = set()
+    ambiguous_speakers = set()
+    
+    for line in json_lines_generator(data_dir, print_progress_every = print_progress_every):
+        line_qids_set = set(line['qids'])
+        
+        if len(line['qids']) > 1:
+            ambiguous_speakers |= line_qids_set
+            
+        all_speakers |= line_qids_set
+        
+    return all_speakers, ambiguous_speakers
+
+
+def get_filtered_speaker_info_data(data_dir, speaker_info_file_path, columns = None):
+    all_speakers_qids, _ = _get_unique_speakers_dataset(data_dir = data_dir)
+    speaker_data = pd.read_parquet(speaker_info_file_path, columns = columns)
+    speaker_data = speaker_data[speaker_data['id'].isin(all_speakers_qids)]
+    return speaker_data
