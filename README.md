@@ -1,4 +1,7 @@
-# What can we do to increase the chances of someone's speech to go viral and have impact?
+<p align="center">
+    # What can we do to increase the chances of someone's speech to go viral and have impact?
+</p>
+
 
 ### Abstract 
 In a world where a simple tweet from someone can drastically change things for millions online, we want to identify what causes can be linked to someone having an impact on huge audiences. A metric of this is the number of individual quotations in newspapers around the world. By analysing the distribution of extremely viral quotes we want to determine what characteristics are important and build guidelines to optimize the chance of a quote to go viral. 
