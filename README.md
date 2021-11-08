@@ -1,6 +1,7 @@
-<p align="center">
-    # What can we do to increase the chances of someone's speech to go viral and have impact?
-</p>
+#<p align="center">
+  What can we do to increase the chances of someone's speech to go viral and have impact?
+</p> 
+
 
 
 ### Abstract 
