@@ -1,10 +1,10 @@
-#What makes a quote go viral ?
+# What makes a quote go viral ?
  A 150 word description of the project idea and goals. What’s the motivation behind your project? What story would you like to tell, and why?
 
 
 
 
-###Abstract 
+### Abstract 
 In a world where a simple tweet from someone can drastically change things for millions online, we want to identify what causes can be linked to someone having an impact on huge audiences. A metric of this is the number of individual quotations in newspapers around the world. By analysing the distribution of extremely viral quotes we want to determine what characteristics are important and build guidelines to optimize the chance of a quote to go viral. 
 
 IDEA 1:
