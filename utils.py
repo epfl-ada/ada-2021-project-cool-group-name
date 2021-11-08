@@ -290,4 +290,4 @@ def get_filtered_speaker_info_data(data_dir, speaker_info_file_path, columns = N
     all_speakers_qids, _ = _get_unique_speakers_dataset(data_dir = data_dir)
     speaker_data = pd.read_parquet(speaker_info_file_path, columns = columns)
     speaker_data = speaker_data[speaker_data['id'].isin(all_speakers_qids)]
-    return speaker_data
+    return speaker_data.set_index('id').to_dict('index')

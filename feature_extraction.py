@@ -55,3 +55,78 @@ def domains_from_urls(urls):
     domain_matcher = re.compile(r"^(?:https?:\/\/)?(?:[^@\/\n]+@)?(?:www\.)?(?P<domain>[^:\/?\n]+)")
     get_domain_from_url = lambda url: domain_matcher.match(url).group('domain')
     return Counter(get_domain_from_url(url) for url in line['urls'])
+
+
+def extract_speaker_features(line, speaker_data, qid_labels, linkcounts, min_age = 5, max_age = 95):
+    # Convert list of speaker qids into a single value.
+    # If several qids possible, choose the one with largest link count.
+    line['qids'] = solve_ambiguous_speakers(line['qids'], linkcounts)
+
+    # Ignore lines for which speaker information is not available.
+    if line['qids'] is None:
+        return
+    
+    features = {}
+    
+    # Try computing age of speaker and ignore lines for which speaker birth date is not available or
+    # is born too soon to be our contemporary.
+    speaker_birth_date = speaker_data.get(line['qids'], {}).get('date_of_birth', None)
+    speaker_age = get_speaker_age(speaker_birth_date, line['date'])
+    
+    if speaker_age is None or speaker_age < min_age or speaker_age > max_age:
+        return
+        
+    # Extract gender of the speaker. Possible genders are summarized in 3 categories: "male", "female", "other".
+    speaker_gender = speaker_data.get(line['qids'], {}).get('gender', None)
+    
+    if speaker_gender is None or len(speaker_gender) == 0:
+        return
+     
+    features['speaker_gender'] = 'other'
+    if len(speaker_gender) == 1:
+        speaker_gender, = speaker_gender
+        speaker_qid_label = qid_labels.get(speaker_gender, '').lower()        
+        if speaker_qid_label in ['male', 'female']:
+            features['speaker_gender'] = speaker_qid_label
+    
+    # Extract which of the most common occupation the speaker has.
+    most_common_occupations = ['actor', 'american football player', 'association football player', 'baseball player',
+                               'basketball player', 'businessperson', 'chief executive officer', 'composer',
+                               'entrepreneur', 'film actor', 'film director', 'film producer', 'investor', 'journalist',
+                               'lawyer', 'musician', 'non-fiction writer', 'politician', 'researcher', 'restaurateur',
+                               'screenwriter', 'singer', 'television actor', 'television presenter', 'television producer',
+                               'university teacher', 'writer']
+    
+    speaker_occupations = speaker_data.get(line['qids'], {}).get('occupation', None)
+    speaker_occupations = [] if speaker_occupations is None else speaker_occupations
+    
+    features['speaker_occupation'] = {occupation: False for occupation in most_common_occupations}
+    for occupation in speaker_occupations:
+        occupation = qid_labels.get(occupation, '').lower()
+        if occupation in features['speaker_occupation']:
+            features['speaker_occupation'][occupation] = True
+            
+    return features
+    
+
+
+def preprocess_line(line, speaker_data, qid_labels, linkcounts):    
+    preprocessed_line = {}
+    
+    # Extract outcome variable.
+    preprocessed_line['num_occurrences'] = line['numOccurrences']
+    
+    # Extract speaker information.
+    speaker_features = extract_speaker_features(line, speaker_data, qid_labels, linkcounts)
+    if speaker_features is None:
+        return
+    
+    preprocessed_line.update(speaker_features)
+    
+    # Save quote as-is because pre-processing occurrs before BERT training.
+    preprocessed_line['quotation'] = line['quotation']
+    
+    # Extract domains from news urls.
+    # preprocessed_line['domains'] = domains_from_urls(line['urls'])
+    
+    return preprocessed_line
