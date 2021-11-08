@@ -1,11 +1,13 @@
-#<p align="center">
-  What can we do to increase the chances of someone's speech to go viral and have impact?
-</p> 
+
+  # Increasing the chances of your speech to go viral : an interrogation on what helps catch the attention of modern day fickle newsreaders 
 
 
 
 ### Abstract 
-In a world where a simple tweet from someone can drastically change things for millions online, we want to identify what causes can be linked to someone having an impact on huge audiences. A metric of this is the number of individual quotations in newspapers around the world. By analysing the distribution of extremely viral quotes we want to determine what characteristics are important and build guidelines to optimize the chance of a quote to go viral. 
+In a world where a simple tweet from someone can drastically change things for millions online, we want to identify what causes can be linked to someone having an impact on huge audiences. A metric of this is the number of individual quotations in newspapers around the world. By analysing the distribution of extremely viral quotes we want to determine what characteristics are important and build guidelines to optimize the chance of a quote to reach a wider range of people. These guidelines would constitute very interesting tools for politicians and researchers specifically to help structure their speeches and works. (100/150 words for now).
+
+
+#### Research Questions: A list of research questions you would like to address during the project.
 
 IDEA 1:
 Look at quotes which are given more media coverage (must choose in terms of numOccurrences or just quote counts). Try determining what makes a quote be popular:
@@ -15,16 +17,20 @@ Look at quotes which are given more media coverage (must choose in terms of numO
 - Newspaper: do these stats change for different newspapers?
 
 
-"Bias inference anaylsis" 
+
+
+
+
+#### Methods
+##### "Bias inference analysis" 
 https://www.researchgate.net/profile/Ali-Minai/publication/267559458_Online_News_Media_Bias_Analysis_using_an_LDA-NLP_Approach/links/570b2cf808aea66081376d8b/Online-News-Media-Bias-Analysis-using-an-LDA-NLP-Approach.pdf
 Aim may be to help politicians make their quotes more viral
 May want to try make predictions about when quote will become viral (after 1h, 2h, ...)
 
+#### Proposed Timeline
 
+#### Organization within the team
 
-
-IDEA 2:
-Try to look at correlations between the stock market and quotes (in terms of date, argument discussed, ...)
 
 
 
