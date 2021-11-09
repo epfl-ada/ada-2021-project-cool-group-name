@@ -9,6 +9,10 @@ In a world where a simple tweet from someone can drastically change things for m
 
 #### Research Questions: A list of research questions you would like to address during the project.
 
+##### Are the extremely viral quotes predominantly random? Does high popularity stem mainly from random interest swings from the public?
+
+##### Are there any identifiable interesting characteristics from which we could deduce valuable lessons as to how to make oneself "quotable"?
+
 IDEA 1:
 Look at quotes which are given more media coverage (must choose in terms of numOccurrences or just quote counts). Try determining what makes a quote be popular:
 - Speaker: occupation, genre, age, ???            ---------> May want to compare these stats to those of the whole population in the country of origin
@@ -22,6 +26,10 @@ Look at quotes which are given more media coverage (must choose in terms of numO
 
 
 #### Methods
+
+##### Initial data scraping (is scraping the right word here)
+We have two separate datasets, the wikiData dataset which contains the information on persons/speakers (date of birth, gender, occupation...). And Quotebank, a corpus of quotations from a decade of news extracted using Quobert. https://zenodo.org/record/4277311#.YYpVGWDMJhE. The first basic step/method for this project is to fuse these two datasets into an exploitable structure for our data analysis. 
+
 ##### "Bias inference analysis" 
 https://www.researchgate.net/profile/Ali-Minai/publication/267559458_Online_News_Media_Bias_Analysis_using_an_LDA-NLP_Approach/links/570b2cf808aea66081376d8b/Online-News-Media-Bias-Analysis-using-an-LDA-NLP-Approach.pdf
 Aim may be to help politicians make their quotes more viral
