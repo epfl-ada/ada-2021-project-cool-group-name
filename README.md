@@ -13,19 +13,8 @@ In a world where a simple tweet from someone can drastically change things for m
 There are many trends that seem totally random in our society, from songs (Gnam Gnam style) to memes that overnight explode in popularity. Naturally, newspaper quotes are generally centered around more serious topics and might not be affected by these random phenomenons. It is quite an interesting question to try to quantify by "how much" these random trends are present in the quotation world.
 
 #### **Are there any identifiable interesting characteristics from which we could deduce valuable lessons as to how to make oneself "quotable"?**
-Keywords? Age of the speaker? Gender? Occupation? What are the characteristics that makes us be able to say this person's speech will be more quoted than this other one, and allow us to say that changing this parameter will make the person more likely impact.
-
-IDEA 1:
-Look at quotes which are given more media coverage (must choose in terms of numOccurrences or just quote counts). Try determining what makes a quote be popular:
-- Speaker: occupation, genre, age, ???            ---------> May want to compare these stats to those of the whole population in the country of origin
-- Text: consider quotes length, word count to see if some words are more common in viral quotes (may want to try with PCA or encodings to classify if quotes are provocative or not, and a general topic)
-- Date: some times of year papers are more prone to publishing? Maybe relate to some real-world events (try extracting variance of date per quote too)
-- Newspaper: do these stats change for different newspapers?
-
-
-
-
-
+Keywords? Age of the speaker? Gender? Occupation? What are the characteristics that makes us be able to say this person's speech will be more quoted than this other one, and allow us to say that changing this parameter will make the person more likely to have impact.
+Other characteristics will be explored like the date, correlation to real world events, nationality, newspaper type and the variance of date per quote (distribution of quote repetition).
 
 #### Methods
 
@@ -39,9 +28,10 @@ May want to try make predictions about when quote will become viral (after 1h, 2
 
 ####Using Bert 
 #### Proposed Timeline
+Milestone 2 (Friday 12th november) : finish the fusing of the two datasets, finish the exploratory data analysis and start thinking about the data story we want to start working on for the rest of the semester. 
 
 #### Organization within the team
-
+The second milestone on exploratory data analysis was very hard to split into even packets of work. Most functions had to be rethought and rewritten more than once and this meant that it was hard for someone to try things on their side until the data structure was fixed in place. 
 
 
 
