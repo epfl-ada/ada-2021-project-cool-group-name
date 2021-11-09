@@ -37,9 +37,9 @@ The second milestone on exploratory data analysis was very hard to split into ev
 
 Please use the following repository structure:
 
-- Cache [dir]: Contains output files from long computations.
-- Data [dir]: Contains the dataset as provided by the course. Includes quotebank's json files and the speaker attributes parquet file.
-- Data Analysis [jupyter notebook]: The jupyter on which the analysis takes place. May be worth duplicating multiple times at the beginning such that each person has its own and we avoid git conflicts.
+- [Cache](Cache) [dir]: Contains output files from long computations.
+- [Data](Data) [dir]: Contains the dataset as provided by the course. Includes quotebank's json files and the speaker attributes parquet file.
+- [Project](Project.ipynb) [jupyter notebook]: The jupyter on which the analysis takes place. May be worth duplicating multiple times at the beginning such that each person has its own and we avoid git conflicts.
 
 - Are we allowed to organize our code as to have external .py files? Because it sure will be a mess if we put all function definitions in the jupyter, but if we must, we will.
 
