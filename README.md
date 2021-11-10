@@ -16,12 +16,12 @@ There are many trends that seem totally random in our society, from songs (Gnam 
 Keywords? Age of the speaker? Gender? Occupation? What are the characteristics that makes us be able to say this person's speech will be more quoted than this other one, and allow us to say that changing this parameter will make the person more likely to have impact.
 Other characteristics will be explored like the date, correlation to real world events, nationality, newspaper type and the variance of date per quote (distribution of quote repetition).
 
-#### Methods
+## Methods
 
-##### Initial data scraping (is scraping the right word here)
+#### Initial data scraping (is scraping the right word here)
 We have two separate datasets, the wikiData dataset which contains the information on persons/speakers (date of birth, gender, occupation...). And Quotebank, a corpus of quotations from a decade of news extracted using Quobert. https://zenodo.org/record/4277311#.YYpVGWDMJhE. The first basic step/method for this project is to fuse these two datasets into an exploitable structure for our data analysis. 
 
-##### "Bias inference analysis" (implemented and dropped)
+#### "Bias inference analysis" (implemented and dropped)
 https://www.researchgate.net/profile/Ali-Minai/publication/267559458_Online_News_Media_Bias_Analysis_using_an_LDA-NLP_Approach/links/570b2cf808aea66081376d8b/Online-News-Media-Bias-Analysis-using-an-LDA-NLP-Approach.pdf
 Aim may be to help politicians make their quotes more viral
 May want to try make predictions about when quote will become viral (after 1h, 2h, ...)
