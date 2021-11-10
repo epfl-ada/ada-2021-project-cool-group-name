@@ -88,6 +88,19 @@ def extract_speaker_features(line, speaker_data, qid_labels, linkcounts, min_age
         speaker_qid_label = qid_labels.get(speaker_gender, '').lower()        
         if speaker_qid_label in ['male', 'female']:
             features['speaker_gender'] = speaker_qid_label
+            
+    # Extract which of the most common nationalities the speaker has.
+    most_common_nationalities = ['australia', 'canada', 'france', 'germany', 'india', 'new zealand', 
+                                 'united kingdom', 'united states of america']
+    
+    speaker_nationalities = speaker_data.get(line['qids'], {}).get('nationality', None)
+    speaker_nationalities = [] if speaker_nationalities is None else speaker_nationalities
+    
+    features['speaker_nationality'] = {nationality: False for nationality in most_common_nationalities}
+    for nationality in speaker_nationalities:
+        nationality = qid_labels.get(nationality, '').lower()
+        if nationality in features['speaker_nationality']:
+            features['speaker_nationality'][nationality] = True
     
     # Extract which of the most common occupation the speaker has.
     most_common_occupations = ['actor', 'american football player', 'association football player', 'baseball player',
