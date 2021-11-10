@@ -7,6 +7,7 @@ import bz2
 import json
 import pandas as pd
 import numpy as np
+from statsmodels.stats.weightstats import DescrStatsW
 
     
 def cache_to_file_pickle(filename, cache_dir = 'Cache', ignore_kwargs = None):
@@ -291,3 +292,18 @@ def get_filtered_speaker_info_data(data_dir, speaker_info_file_path, columns = N
     speaker_data = pd.read_parquet(speaker_info_file_path, columns = columns)
     speaker_data = speaker_data[speaker_data['id'].isin(all_speakers_qids)]
     return speaker_data.set_index('id').to_dict('index')
+
+
+def describe_weighted_stats(values, weights, percentiles = []):
+    
+    values, weights = list(values), list(weights)
+    
+    stats = DescrStatsW(values, weights = weights, ddof = 0)
+    stats_dict = {'count': stats.sum_weights, 'mean': stats.mean, 'std': stats.std, 'min': stats.quantile(0.).item()}
+    
+    for percentile in sorted([0.25, 0.5, 0.75] + percentiles):
+        stats_dict[f'{100*percentile}%'] = stats.quantile(percentile).item()
+    
+    stats_dict['max'] = stats.quantile(1.).item()
+    
+    return pd.Series(stats_dict)
