@@ -1,5 +1,5 @@
 # Increasing the chances of your speech to go viral : an interrogation on what helps catch the attention of modern day fickle newsreaders 
-Authors: Andrea Oliveri, CÃ©lina Chkroun, Kaourintin Tamine, Mattia Lazzaroni
+Authors: Andrea Oliveri, Célina Chkroun, Kaourintin Tamine, Mattia Lazzaroni
 
 
 ## Abstract 
@@ -25,51 +25,63 @@ We have two separate datasets:
 - [`Wikidata`](https://www.wikidata.org/wiki/Wikidata:Main_Page): dataset which contains the information on persons/speakers (date of birth, gender, occupation...).
 - [`Quotebank`](https://zenodo.org/record/4277311#.YYpVGWDMJhE): corpus of quotations from a decade of news extracted using Quobert.
 
- The first basic step/method for this project is to fuse these two datasets into an exploitable structure for our data analysis.
+The first basic step/method for this project is to fuse these two datasets into an exploitable structure for our data analysis.
 
 ### 2. Dealing with large dataset
 **TO DO ANDREAAAAAAAAAA**
 
 ### 3. Exploring the data
 
+#### Analysis of number of occurences of the quotes
+We first analyzed the number of occurences of all the quotes present in the dataset in order to define the threshold above which a quote will be considered as viral.
+
 #### Explore speaker's features
+We also conducted an analysis on speaker's features. 
+At first, we explored the raw distribution of the speaker's features and, after that, we weighted the distribution in 2 different ways (by the number of quotes and by the total number of occurences of quotes per speaker). Further analysis were performed to look at the co-occurences of different values per feature when multiple values are given per speaker. The co-occurences between different features were also analyzed.
 
-#### Using bertTopic (NLP based technique)
-bertTopic allows us to classify the quotation set into topics. It makes a lot of sense to split the quotes into topic groups, for data visualization as well as for model training and other methods that might want the quotes to be split by topic. 
+#### Length of Quotes
+We also analyzed the length of quotes by plotting the distribution of length of quotes and its proportion.
 
-#### "Bias inference analysis" (implemented and dropped)
-[Bias analysis](https://www.researchgate.net/profile/Ali-Minai/publication/267559458_Online_News_Media_Bias_Analysis_using_an_LDA-NLP_Approach/links/570b2cf808aea66081376d8b/Online-News-Media-Bias-Analysis-using-an-LDA-NLP-Approach.pdf) approach to find quote topics
-Aim may be to help politicians make their quotes more viral
-May want to try make predictions about when quote will become viral (after 1h, 2h, ...)
-We tried implementing this method but it was computationally too heavy especially memory wise (we have 16 gigas of ram and it was insufficient). Anyways, we prefered using
-BerTopic which provided more useful functionalities
+#### Extraction and Visualization of the Quote Topics
+At first, we tried to extract the topics of the quote using a [Bias inference analysis](https://www.researchgate.net/profile/Ali-Minai/publication/267559458_Online_News_Media_Bias_Analysis_using_an_LDA-NLP_Approach/links/570b2cf808aea66081376d8b/Online-News-Media-Bias-Analysis-using-an-LDA-NLP-Approach.pdf) approach to find quote topics.
+Nevertherless, we found out by implementing this method that it was computationally too heavy especially memory-wise.
 
-#### Using bertTopic (NLP based technique)
-bertTopic allows us to classify the quotation set into topics. It makes a lot of sense to split the quotes into topic groups, for data visualization as well as for model training and other methods that might want the quotes to be split by topic. 
+We then decided to try to extract the topics using [BERTopic](https://towardsdatascience.com/dynamic-topic-modeling-with-bertopic-e5857e29f872) .
+BERTopic is a NLP based technique allowing us to classify the quotation set into topics and on top, many useful functionalities are provided with it.
+Indeed, it makes a lot of sense to split the quotes into topic groups, for data visualization as well as for model training and other methods that might want the quotes to be split by topic. 
 
-### 4. Classification: Logistic regression/random Forest/Linear Regression
-We plan on parsing the processed data and convert each line into a feature vector and associate them with a viral/not viral label.
-We will try to see if we can apply penalties to identify if some features are relevant or not.
+### 4. Training a classifier
+In order to try to predict the potential of a new quote to be viral, we wanted to train a classifier. We though about using Logistic regression, Random Forest or Linear Regression as a model.
+To train it, we plan on parsing the processed data and convert each line into a feature vector and associate them with a viral/not viral label.
+We will then try to see if we can apply penalties to identify if some features are relevant or not.
  
 ## Proposed Timeline
-
-Milestone 2 (Friday 12th november) : finish the fusing of the two datasets, finish the exploratory data analysis, implement bertTopic to split quotes and visualize and start thinking about the data story we want to start working on for the rest of the semester. 
-
+Next steps to go on with the project:
+- Explore further correlation between features
+- Train bert on larger portion of dataset
+- Try training bert with compute_probability parameter = True such that we can predict not only most likely topic but probability of each topic of each quote
+- Select meaningful features
+- Merge these data into a feature vector and associate a label viral/not viral to it
+- Train multiple types of classifier to see if features meaningful and if classifier works well on a test set
+- Use regularizarion on well-performing models to reduce number of non-zero coefficients and filter actually useful features
+- Try to conclude something from the found results and write the data story
 
 ## Organization within the team
-
-The second milestone on exploratory data analysis was very hard to split into even packets of work. Most functions had to be rethought and rewritten more than once and this meant that it was hard for someone to try things on their side until the data structure was fixed in place. 
-Now that the data analysis and extraction is finished we expect things to be more easily dispatchable among the team. 
-
+Within the team, the organization will be as follow:
+- Member 1: Continue the data exploration (feature's correlation, retraining Bert).
+- Member 2: Training multiple classifier, select correct method and hyperparameters.
+- Member 3: Focus on visualization of the project's results and think about how presenting them into the final data story.
+- Member 4: Writing of the data story.
 
 ## Repository organization
 
 - [Cache](Cache) [dir]: Contains output files from long computations.
-- [Data](Data) [dir]: Contains the dataset as provided by the course. Includes quotebank's json files and the speaker attributes parquet file.
-- [Project](Project.ipynb) [jupyter notebook]: The jupyter on which the analysis takes place.
-- [Utilitary functions for feature extraction](feature_extraction.py) [python script]: 
-- [Utilitary functions to visualize the data](plot.py) [python script]: 
-- [Utilitary functions to help managing the dataset](utils.py) [python script]: 
+- [Data](Data) [dir]: Contains the provided dataset (quotebank's json files and speaker attributes parquet file).
+- [Project](Project.ipynb) [jupyter notebook]: The jupyter in which the analysis takes place.
+- [Source](src) [dir] Contains .py modules where utilitary functions are implemented.
+    - For feature extraction: feature_extraction.py
+    - For visualization: plot.py
+    - To manage the data: utils.py
 
 ## Questions
 
