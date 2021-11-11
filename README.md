@@ -4,7 +4,7 @@
 
 
 ## Abstract 
-In a world where a simple tweet from someone can drastically change things for millions online, we want to identify what causes can be linked to someone having an impact on huge audiences. A metric of this is the number of individual quotations in newspapers around the world. By analysing the distribution of extremely viral quotes we want to determine what characteristics are important and build guidelinesn, if possible, to optimize the chance of a quote to reach a wider range of people. These guidelines would constitute very interesting tools for politicians and researchers specifically to help structure their speeches and works. (100/150 words for now).
+In a world where a simple tweet from someone can drastically change things for millions online, we want to identify what causes can be linked to someone having an impact on huge audiences. A metric of this is the number of individual quotations in newspapers. By analysing the distribution of extremely viral quotes we want to determine what characteristics are important and build guidelines, if possible, to optimize the chance of a quote to reach a wider range of people. These guidelines would constitute very interesting tools in politics and research for example to better chose the topic of a quote and which representative of their organization should say it to make the quote more likely to become viral.
 
 
 ## **Research Questions:**
@@ -33,8 +33,7 @@ bertTopic allows us to classify the quotation set into topics. It makes a lot of
 
 #### Logistic regression/random Forest/Linear Regression
 We plan on parsing the processed data and convert each line into a feature vector and associate them with a viral/not viral label.
-We will try to see if we can apply penalties to identify if some features are relevant or not.  
-
+We will try to see if we can apply penalties to identify if some features are relevant or not.
  
 #### Proposed Timeline
 Milestone 2 (Friday 12th november) : finish the fusing of the two datasets, finish the exploratory data analysis, implement bertTopic to split quotes and visualize and start thinking about the data story we want to start working on for the rest of the semester. 
@@ -43,14 +42,8 @@ Milestone 2 (Friday 12th november) : finish the fusing of the two datasets, fini
 The second milestone on exploratory data analysis was very hard to split into even packets of work. Most functions had to be rethought and rewritten more than once and this meant that it was hard for someone to try things on their side until the data structure was fixed in place. 
 
 
-
-Please use the following repository structure:
+## Repository organization
 
 - [Cache](Cache) [dir]: Contains output files from long computations.
 - [Data](Data) [dir]: Contains the dataset as provided by the course. Includes quotebank's json files and the speaker attributes parquet file.
-- [Project](Project.ipynb) [jupyter notebook]: The jupyter on which the analysis takes place. May be worth duplicating multiple times at the beginning such that each person has its own and we avoid git conflicts.
-
-- Are we allowed to organize our code as to have external .py files? Because it sure will be a mess if we put all function definitions in the jupyter, but if we must, we will.
-
-NOTE: we can sync Data and Cache folder using google drive. Normalement j'ai partagé avec vous un lien à mon espace de stockage epfl, sur votre mail epfl.
-Par contre, si on se trompe et on efface accidentellement un fichier cache qui prend long à tourner, il n'est pas backed up. Du coup il est perdu et faudra le rerun.
+- [Project](Project.ipynb) [jupyter notebook]: The jupyter on which the analysis takes place.
