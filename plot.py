@@ -20,7 +20,9 @@ def plot_speaker_feature_distribution(df, feature, n_bars = 10, figsize = (15, 4
     
     feature_titled = feature.replace('_', ' ').title()
     
-    df = df[[feature, 'quote_count', 'num_occurrences']].rename(columns = {feature: feature_titled, 'quote_count': 'Quote Counts', 'num_occurrences': 'Number of Occurrences'})
+    df = df[[feature, 'quote_count', 'num_occurrences']].rename(columns = {feature: feature_titled, 
+                                                                           'quote_count': 'Quote Counts', 
+                                                                           'num_occurrences': 'Number of Occurrences'})
     df.dropna(axis = 0, how = 'any', inplace = True)
     df.reset_index(drop = True, inplace = True)
         
@@ -47,7 +49,8 @@ def plot_speaker_feature_distribution(df, feature, n_bars = 10, figsize = (15, 4
             
             color = sns.color_palette()[0]
             
-            sns.barplot(x = top_n_most_common, y = [value_counts[key][weight_col] for key in top_n_most_common], ax = ax, color = color, **plot_kwargs)
+            sns.barplot(x = top_n_most_common, y = [value_counts[key][weight_col] for key in top_n_most_common], 
+                        ax = ax, color = color, **plot_kwargs)
             ax.set_ylabel('Counts')
             ax.set_xticklabels(ax.get_xticklabels(), rotation = 90)
             ax.set_title("Not Weighted" if weight_col == 'Not Weighted' else "Weighted by " + weight_col)
@@ -55,8 +58,7 @@ def plot_speaker_feature_distribution(df, feature, n_bars = 10, figsize = (15, 4
     fig.suptitle(feature_titled + " Distribution")
     fig.tight_layout()
     
-    
-    
+        
 
 def plot_co_occurrence_matrix(data, feature_1, feature_2, figsize = (10, 10), keep_top_n = None, 
                               annot = True, fmt = '.0f', **heatmap_kwargs):
@@ -98,3 +100,8 @@ def plot_co_occurrence_matrix(data, feature_1, feature_2, figsize = (10, 10), ke
     plt.xlabel(feature_1.title())
     plt.ylabel(feature_2.title())
     plt.show()
+    
+    
+def plot_boxplot(data, feature_1, feature_2, figsize = (10, 10), keep_top_n = None, 
+                 annot = True, fmt = '.0f', **heatmap_kwargs):
+    raise NotImplementedError
