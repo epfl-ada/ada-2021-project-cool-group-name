@@ -2,9 +2,26 @@ import re
 from collections import Counter
 
 
+
 def get_speaker_age(birth_date, quote_date):
-    """Returns None in case of error (bad formatted dates or None dates)"""
+    """
+    Function parsing the provided birth date and quote date and using them to compute the speaker's age at the time of the quote.
+    Returns None in case of error (bad formatted dates or if one of the two dates is None).
+    Note that despite not all date formats being parsable by this function, it is nonetheless quiet flexible and also supports 
+    negative years.
     
+    Params:
+        birth_date::[str | list(str) | None]
+            The birth date of the speaker, or a list of possible birth dates. If a list is provided, this function will
+            always use the first element of the list. If None, the function returns None immediately.
+        quote_date::[str | None]
+            The date at which the quote was spoken. If None, the function returns None immediately.        
+    
+    Returns:
+        age::[int | None]
+            The age of the speaker at the time of the quote, or None if an error was detected in the formatting of the dates
+            or if one of the dates was None.
+    """ 
     if birth_date is None or quote_date is None or len(birth_date) == 0:
         return
         
@@ -18,8 +35,6 @@ def get_speaker_age(birth_date, quote_date):
     birth_date_match = date_matcher.match(birth_date)
     quote_date_match = date_matcher.match(quote_date)
     if birth_date_match is None or quote_date_match is None:
-        print("Bad formatted date:", birth_date)
-        print("Bad formatted date:", quote_date)
         return
         
     birth_year, birth_month, birth_day = (int(number) for number in birth_date_match.group('year', 'month', 'day'))
@@ -32,8 +47,26 @@ def get_speaker_age(birth_date, quote_date):
     return age
 
 
+
 def solve_ambiguous_speakers(speakers_qids, linkcounts):
+    """
+    Function returning the speaker qid in speakers_qids parameter with the largest link count in linkcounts parameter.
+    The function returns None if an error was detected (if speakers_qids is None).
+    This function is used to decide which one of the homonyms to assign the quote to, and always assigns it to the qid
+    with the largest link count as that is likely to be the most famous person and hence the person with the largest chance of
+    being cited. 
     
+    Params:
+        speakers_qids::[iterable | None]
+            Iterable containing the speakers_qids to choose the most probable one from. The function immediately returns None
+            if this value is None.
+        linkcounts::[dict]
+            Dictionary with keys the different speakers' qids and with values the linkcounts for the qid queried from Wikidata.
+    
+    Returns:
+        qid::[str | None]
+            The qid of the speaker in speakers_qids with largest link counts in linkcounts. None if speakers_qids is None.
+    """
     if speakers_qids is None or len(speakers_qids) == 0:
         return
         
@@ -51,13 +84,62 @@ def solve_ambiguous_speakers(speakers_qids, linkcounts):
     return max(speakers_linkcounts, key = speakers_linkcounts.get)
 
 
+
 def domains_from_urls(urls):
+    """
+    Function extracting from each url in urls parameter its domain.
+    
+    Params:
+        urls::[iterable]
+            Iterable containing the urls to extract the domains of.
+        
+    Returns:
+        domains::[Counter]
+            Counter with keys the domains and values the number of occurrences of that domain in the urls parameter.
+    """
     domain_matcher = re.compile(r"^(?:https?:\/\/)?(?:[^@\/\n]+@)?(?:www\.)?(?P<domain>[^:\/?\n]+)")
     get_domain_from_url = lambda url: domain_matcher.match(url).group('domain')
     return Counter(get_domain_from_url(url) for url in line['urls'])
 
 
+
 def extract_speaker_features(line, speaker_data, qid_labels, linkcounts, min_age = 5, max_age = 95):
+    """
+    Function extracting the speaker features (age, nationalities, gender, occupations) from the Quotebank line provided as
+    parameter and speaker_data dictionary containing several informations about the speaker. The qid_labels parameter is used
+    to return said features in human-readable form instad of as Wikidata qids and the linkcounts parameter is needed to
+    determine the most likely speaker when multiple possible speaker qids are associated to the line. This function returns None
+    if any of the speaker features could not be correcly determined, or if the calculated age is outside the range [min_age, max_age].
+    
+    Params:
+        line::[pd.Series]
+            Pandas series containing (at least) the following elements:
+            - qids: a list of possible qids of the speaker associated with the current quote.
+            - date: the date at which the quote was first published in a news article.
+        speaker_data::[dict]
+            Dictionary of form {speaker_qid -> {birth_date -> list_of_values, 
+                                                gender -> list_of_values,
+                                                nationality -> list_of_values,
+                                                occupations -> list_of_values}}.
+        qid_labels::[dict]
+            Dictionary mapping to each qid observed in the speakers info dataset an english human-readable label.
+        linkcounts::[dict]
+            Dictionary with keys the different speakers' qids and with values the linkcounts for the qid queried from Wikidata.
+        min_age::[int | float]
+            Minimum age (inclusive) of speaker for quote to be considered usable.
+        max_age::[int | float]
+            Maximum age (inclusive) of speaker for quote to be considered usable.
+
+    Returns:
+        features::[dict | None]
+            Dictionary containing the following keys, and their computed values: speaker_gender, speaker_nationality, speaker_occupation.
+            Speaker gender is always one of "male", "female" or "other". Speaker nationality is a dictionary with keys some of the
+            most common nationalities of speakers in the Quotebank dataset and values a boolean to say if the current speaker has that
+            nationality or not. Speaker occupation is a dictionary with keys some of the most common occupations of speakers in the 
+            Quotebank dataset and values a boolean to say if the current speaker has that occupation or not. 
+            This value is be None if any of the speaker features could not be correcly determined, or if the calculated age is outside
+            the range [min_age, max_age].
+    """
     # Convert list of speaker qids into a single value.
     # If several qids possible, choose the one with largest link count.
     line['qids'] = solve_ambiguous_speakers(line['qids'], linkcounts)
@@ -127,7 +209,40 @@ def extract_speaker_features(line, speaker_data, qid_labels, linkcounts, min_age
     
 
 
-def preprocess_line(line, speaker_data, qid_labels, linkcounts):    
+def preprocess_line(line, speaker_data, qid_labels, linkcounts):
+    """
+    Function extracting all features we are interested in (number of occurrences, speaker age, speaker nationalities,
+    speaker gender, speaker occupations, number of words in the quote) and returning them as a dictionary. The raw quotation
+    is also stored in the dictionary for later use when training topic model. 
+    The speaker_data, qid_labels, linkcounts are directly passed to extract_speaker_features.
+    This function returns None if any of the features could not be correcly determined (if extract_speaker_features
+    returned None).
+    
+    Params:
+        line::[pd.Series]
+            Pandas series containing (at least) the following elements:
+            - quotation: the current quote.
+            - qids: a list of possible qids of the speaker associated with the current quote.
+            - date: the date at which the quote was first published in a news article.
+            - numOccurrences: the number of times the current quote was observed in news articles.
+            - urls: a list of urls at which the current quote was observed.
+        speaker_data::[dict]
+            Dictionary of form {speaker_qid -> {birth_date -> list_of_values, 
+                                                gender -> list_of_values,
+                                                nationality -> list_of_values,
+                                                occupations -> list_of_values}}.
+        qid_labels::[dict]
+            Dictionary mapping to each qid observed in the speakers info dataset an english human-readable label.
+        linkcounts::[dict]
+            Dictionary with keys the different speakers' qids and with values the linkcounts for the qid queried from Wikidata.
+        
+    Returns:
+        features::[dict | None]
+            Dictionary containing the following keys, and their computed values: num_occurrences, speaker_gender, speaker_nationality, 
+            speaker_occupation, number_words_quote, quotation. Speaker gender, nationality and occupation are the ones obtained from
+            extract_speaker_features. The number of occurrences in an integer and the quotation is a string.
+            This value is be None if any of the features could not be correcly determined (if extract_speaker_features returned None).
+    """
     preprocessed_line = {}
     
     # Extract outcome variable.

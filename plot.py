@@ -148,7 +148,36 @@ def plot_co_occurrence_matrix(data, feature_1, feature_2, figsize = (10, 10), ke
     
 def plot_boxplot_for_each_discrete_value(data, feature_continuous, feature_discrete, figsize = (10, 10), keep_top_n = None, 
                                          filter_func = None, whis = float('inf'), **boxplot_kwargs):
+    """
+    Function for plotting boxplots of the distribution of a continuous for each value of a discrete feature. Said features in
+    data are expected to be columns of the dataframe in which missing values are None, and otherwise a list of elements 
+    for the discrete feature and a list of numbers, or a single number, for each cell in the continuous feature column.
+    The number of different boxplots displayed can be limited with keep_top_n parameter (keeping only most frequent discrete values)
+    to avoid overcrowding of xlabels.
     
+    Params:
+        data::[pd.DataFrame]
+            DataFrame containing informations of each speaker, including the features we are interested in.
+        feature_continuous::[str]
+            Name of the continuous feature to plot the distribution of as boxplots.
+        feature_discrete::[str]
+            Name of the discrete feature for each value of which a boxplot will be generated.
+        figsize::[tuple(float, float)]
+            The size of the figure in the boxplots will be drawn.
+        keep_top_n::[int]
+            If not None, limits the number of boxplots displayed (keeping only those corresponding to the most frequent discrete values).
+        filter_func::[function]
+            Function used for filtering values of the continuous feature. If not None, each value of continuous feature will be
+            fed to the function and if it returns True, said value will be used in boxplot, otherwise it will be discarded.
+        whis::[float]
+            The maximum length of the whiskers in the boxplot.
+            Passed directly to plt.boxplot.
+        boxplot_kwargs::[dict]
+            Additional keyword arguments passed directly to plt.boxplot.
+            
+    Returns:
+        None    
+    """
     distribution_per_discrete_value = {}
 
     data = data[{feature_continuous, feature_discrete}].dropna(axis = 0, how = 'any')
