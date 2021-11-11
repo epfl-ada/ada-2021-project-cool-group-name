@@ -14,22 +14,24 @@ There are many trends that seem totally random in our society, from songs (Gnam 
 Keywords? Age of the speaker? Gender? Occupation? What are the characteristics that makes us be able to say this person's speech will be more quoted than this other one, and allow us to say that changing this parameter will make the person more likely to have impact.
 Other characteristics will be explored like the date, correlation to real world events, nationality, newspaper type and the variance of date per quote (distribution of quote repetition).
 
-#### **Does the number of words in a quote inluence its success? And are there any topics more recurrent in more viral quotes? **
+#### **Does the number of words in a quote inluence its success? And are there any topics more recurrent in more viral quotes?**
 
 
 ## Methods
 
-#### Collect data of interest from multiple datasets
+### Collect data of interest from multiple datasets
 We have two separate datasets:
 - [`Wikidata`](https://www.wikidata.org/wiki/Wikidata:Main_Page): dataset which contains the information on persons/speakers (date of birth, gender, occupation...).
 - [`Quotebank`](https://zenodo.org/record/4277311#.YYpVGWDMJhE): corpus of quotations from a decade of news extracted using Quobert.
 
  The first basic step/method for this project is to fuse these two datasets into an exploitable structure for our data analysis.
 
-#### Dealing with large dataset
+### Dealing with large dataset
 **TO DO**
 
-#### Exploring the data
+### Exploring the data
+
+#### Explore speaker's features
 
 #### Using bertTopic (NLP based technique)
 bertTopic allows us to classify the quotation set into topics. It makes a lot of sense to split the quotes into topic groups, for data visualization as well as for model training and other methods that might want the quotes to be split by topic. 
@@ -44,7 +46,7 @@ BerTopic which provided more useful functionalities
 #### Using bertTopic (NLP based technique)
 bertTopic allows us to classify the quotation set into topics. It makes a lot of sense to split the quotes into topic groups, for data visualization as well as for model training and other methods that might want the quotes to be split by topic. 
 
-#### Logistic regression/random Forest/Linear Regression
+### Logistic regression/random Forest/Linear Regression
 We plan on parsing the processed data and convert each line into a feature vector and associate them with a viral/not viral label.
 We will try to see if we can apply penalties to identify if some features are relevant or not.
  
