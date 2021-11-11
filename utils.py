@@ -380,16 +380,36 @@ def json_lines_generator(data_dir_or_path, print_progress_every = 1000000):
                 print(f"Finished processing {input_file_path} in {(time.time() - start_time) / 60:.3f} minutes")
 
 
+
 @cache_to_file_pickle("utils-query_wikidata_for_linkcounts_and_labels", ignore_kwargs = ["print_progress_every"])
-
-
-def query_wikidata_for_linkcounts_and_labels(data_dir, speaker_info_file_path, print_progress_every = 10000000):    
+def query_wikidata_for_linkcounts_and_labels(data_dir, speaker_info_file_path, print_progress_every = 10000000):  
+    """
+    Utilitary function querying Wikidata for the link counts of all speakers in Quotebank dataset that have ambiguous QIDs
+    (speaker has homonyms and as such we can't know which person it corresponds to just from the name), and also querying
+    the label of all QIDs observed in the speakers info dataset (such as the labels of the occupations, nationalities, religions, ...).
+    
+    Params:
+        data_dir::[str]
+            The path to the directory containing .json.bz2 files making up the Quotebank dataset.
+        speaker_info_file_path::[str]
+            The path to the .parquet file containing some of the speaker informations we are interested in (gender, occupation,
+            nationality, ethnicity, religion). These informations are stored as Wikidata QIDs.
+        print_progress_every::[int]
+            Parameter passed directly to json_lines_generator.
+                  
+    Returns:
+        qid_labels::[dict]
+            Dictionary mapping to each qid observed in the speakers info dataset an english human-readable label.
+        lincounts::[dict]
+            Dictionary mapping to each qid of speakers with homonyms the Wikidata link counts on qid's page.
+    """
     all_speakers, speakers_needing_linkcounts = _get_unique_speakers_dataset(data_dir = data_dir, 
                                                                              print_progress_every = print_progress_every)
     
     # Load part of data extracted from Wikidata dump about speakers.
-    speaker_data = get_filtered_speaker_info_data(data_dir, speaker_info_file_path, columns = ['id', 'label', 'gender', 'occupation', 
-                                                                                               'nationality', 'ethnic_group', 'religion'])
+    speaker_data = get_filtered_speaker_info_data(data_dir, speaker_info_file_path, convert_to_dict = False,
+                                                  columns = ['id', 'label', 'gender', 'occupation', 
+                                                             'nationality', 'ethnic_group', 'religion'])
             
     # Store id-labels pairs in another variable and remove them from original dataframe.
     speaker_qid_labels = speaker_data[['id', 'label']]
@@ -421,6 +441,22 @@ def query_wikidata_for_linkcounts_and_labels(data_dir, speaker_info_file_path, p
 
 @cache_to_file_pickle("utils-_get_unique_speakers_dataset", ignore_kwargs = ["print_progress_every"])
 def _get_unique_speakers_dataset(data_dir, print_progress_every = 10000000):    
+    """
+    Utilitary function parsing the Quotebank dataset and returning a set containing all the speaker qids present as well as
+    a set containing all the speaker qids which have homonyms.
+    
+    Params:
+        data_dir::[str]
+            The path to the directory containing .json.bz2 files making up the Quotebank dataset.
+        print_progress_every::[int]
+            Parameter passed directly to json_lines_generator.
+                  
+    Returns:
+        all_speakers::[set]
+            Set containing the qids of all speakers in the Quotebank dataset.
+        ambiguous_speakers::[dict]
+            Set containing the qids of all speakers with homonyms in the Quotebank dataset.
+    """
     all_speakers = set()
     ambiguous_speakers = set()
     
@@ -435,15 +471,54 @@ def _get_unique_speakers_dataset(data_dir, print_progress_every = 10000000):
     return all_speakers, ambiguous_speakers
 
 
-def get_filtered_speaker_info_data(data_dir, speaker_info_file_path, columns = None):
+def get_filtered_speaker_info_data(data_dir, speaker_info_file_path, columns = None, convert_to_dict = True):
+    """
+    Utilitary function loading the speaker infos .parquet file and immediately filtering the rows and columns which are
+    not useful (rows corresponding to people not in Quotebank and columns not in the columns parameter).
+    
+    Params:
+        data_dir::[str]
+            The path to the directory containing .json.bz2 files making up the Quotebank dataset.
+        speaker_info_file_path::[str]
+            The path to the .parquet file containing some of the speaker informations. These informations are stored as
+            Wikidata QIDs.
+        columns::[iterable]
+            The columns of the speaker info dataframe that should not be filtered out. If None, all columns are kept.
+        convert_to_dict::[bool]
+            Whether after filtering the pandas dataframe containing the speaker info should be converted into a dictionary
+            of form: {speaker_qid -> {column_name -> column_value_for_speaker_id}} (useful because a particular information
+            about a particular speaker is faster to access this way than in a dataframe using masks).
+            
+    Returns:
+        speaker_data::[pd.DataFrame | dict]
+            Dataframe containing the speaker information from the .parquet file after filtering. 
+            The dataframe itself is returned if convert_to_dict is False, otherwise it is converted into a dictionary of form
+            {speaker_qid -> {column_name -> column_value_for_speaker_id}}.
+    """
     all_speakers_qids, _ = _get_unique_speakers_dataset(data_dir = data_dir)
     speaker_data = pd.read_parquet(speaker_info_file_path, columns = columns)
     speaker_data = speaker_data[speaker_data['id'].isin(all_speakers_qids)]
-    return speaker_data.set_index('id').to_dict('index')
+    return speaker_data.set_index('id').to_dict('index') if convert_to_dict else speaker_data
 
 
 def describe_weighted_stats(values, weights, percentiles = []):
+    """
+    Utilitary function computing descriptive statistics (mean, standard deviation, min, max, quartiles and additional
+    percentiles passed as parameter) from a list of values and weights (number of observations) associated to each value.
     
+    Params:
+        values::[ordered iterable]
+            The values taken by the random variable.
+        weights::[ordered iterable]
+            The number of times the corresponding value in values parameter was observed.
+        percentiles::[iterable]
+            List of additional percentiles that should be calculated for the given weighted statistical distribution.
+                  
+    Returns:
+        stats_dict::[pd.Series]
+            The statistics (mean, standard deviation, min, max, quartiles and additional percentiles passed as parameter)
+            calculated for the given weighted statistical distribution.
+    """    
     values, weights = list(values), list(weights)
     
     stats = DescrStatsW(values, weights = weights, ddof = 0)

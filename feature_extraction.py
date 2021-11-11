@@ -140,6 +140,9 @@ def preprocess_line(line, speaker_data, qid_labels, linkcounts):
     
     preprocessed_line.update(speaker_features)
     
+    # Extract number of words in the quote.
+    preprocessed_line['number_words_quote'] = len(line['quotation'].split())
+    
     # Save quote as-is because pre-processing occurrs before BERT training.
     preprocessed_line['quotation'] = line['quotation']
     
