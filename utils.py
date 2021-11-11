@@ -11,12 +11,56 @@ from statsmodels.stats.weightstats import DescrStatsW
 
     
 def cache_to_file_pickle(filename, cache_dir = 'Cache', ignore_kwargs = None):
-    # Warning: filename should follow convention: "{class name}-{method name}" for class methods and "function-{function name}" for
-    # functions declared outside classes.
+    """
+    Utilitary decorator allowing to store the output of the function for a given set of parameters in a binary
+    file on disk and, upon calling of the function with the same set of parameters, return directly the result without
+    performing all the computation again.
     
-    # This function is not thread-safe!
+    Warning: this decorator is not thread-safe!
+    
+    Warning: this decorator requires to explicitely choose the filename of the binary file which will store the combinations
+    of parameters and results of the function. If two functions are mapped to the same file (same cache_dir and filename),
+    erroneous behaviour can occurr. For this reason, the following naming convention for the filename is proposed:
+    filename = "{class name}-{method name}"     for class methods, 
+               "{package name}-{function name}" for package methods,
+               "function-{function name}" for functions outside packages.
+               
+    Warning: this decorator removes randomness in the result!
+    
+    Warning: by design, when using this decorator all function parameters must be passed as keyword-arguments.
+    
+    Warning: by design, when using this decorator all function parameters must be python standard types (int, float, str,
+    list, tuple, set, dict)
+               
+    Params:
+        filename::[str]
+            Name of the binary file which will store the previously observed combinations of function parameter values and
+            function outputs.
+        cache_dir::[str]
+            The name of the directory in which the file will be created. The same directory can be used to store the cache files
+            of several functions. 
+        ignore_kwargs::[tuple | list | None]
+            The names of the parameters which can safely be ignored when storing result as they do not impact the function result.
+            Use None if all parameters impact the function result.
+    
+    Returns:
+        decorator::[function]
+            The decorator configured to respect requested filename, cache_dir and ignore_kwargs.
+    """
     
     def recursive_std_types_to_tuple(obj):
+        """
+        Utilitary function which converts a python standard type object passed as parameter into an hashable object in a deterministic
+        manner (for exemple dealing with randomness in dictionary and set elements positions.
+
+        Params:
+            obj::[int | float | str | list | tuple | set | dict]
+                Python standard type object which we want to convert into an hashable deterministic form.
+            
+        Returns:
+            hashable_obj::[int | float | str | tuple]
+                Hashable version of input object.
+        """
         if isinstance(obj, (int, float, str)):
             return obj
 
@@ -36,13 +80,42 @@ def cache_to_file_pickle(filename, cache_dir = 'Cache', ignore_kwargs = None):
     os.makedirs(cache_dir, exist_ok = True)
     cache_file_path = os.path.join(cache_dir, filename)
     
+    # Sanity check of 'ignore_kwargs' parameter.
     if ignore_kwargs is not None:
         if not isinstance(ignore_kwargs, (list, tuple)) or not all(isinstance(key, str) for key in ignore_kwargs):
             raise TypeError("ignore_kwargs params must be either a list (or tuple) of strings, or None.")
     
+    
     def decorator(function):
-        def wrapper(**kwargs):
+        """
+        Decorator returned by cache_to_file_pickle. It takes a function as input and returns it wrapped into additional code.
+        
+        Params:
+            function::[function]
+                The function object to be decorated.
             
+        Returns:
+            wrapper::[function]
+                The decorated function.
+        """
+        
+        def wrapper(**kwargs):
+            """
+            Function called in place of original function when using decorator. This wrapper checks if the parameters passed to
+            the original function have already been observed using the binary file stored on disk, and if so does not call the
+            original function, instead directly returning the result. If the result is not known yet, the original function is
+            called and the result stored for this combination of parameters. 
+            
+            Note that the warning in cache_to_file_pickle refer to this function.
+            
+            Params:
+                kwargs::[dict]
+                    The keyword-arguments passed as parameters to the original function.
+
+            Returns:
+                result::[object]
+                    The result obtained by calling the original function with the kwargs set of parameters.
+            """
             # Load cache if available.
             cache = {}
             if os.path.isfile(cache_file_path):
@@ -82,18 +155,21 @@ def cache_to_file_pickle(filename, cache_dir = 'Cache', ignore_kwargs = None):
 def _make_chunked_requests_wikidata(ids, sparql_query_format, value_label, chunk_size = 500, wait_between_chunks_secs = 0.1,
                                     max_attempts = 1000):
     """
-    Function querying Wikidata for some property of provided ids provided as parameters.
-    The query used must be provided as well as the label of the desired property used in the query.
-    To avoid the server refusing requests, the ids are split into chuncks of desired size and a
-    different request is made for each chunk, waiting a certain amount of time between requests.
+    Utilitary function querying Wikidata repeatedly for some property of the ids provided as parameters.
+    The query used must be provided as well as the label of the desired property used in the query. 
+    To avoid loss of data due to the server refusing requests (either because a single request is too large
+    or because the same machine is making requests at a too high rate), the ids are split into chuncks of
+    desired size and a different request is made for each chunk, waiting a certain amount of time between requests,
+    and retrying a maximum number of times if the same request keeps on failing multiple times.
+    Note that this function also retries in case the query was refused due to bad syntax, in which case too large
+    values of max_attempts would result in a long time to wait before an exception is thrown.
     
     Params:
         ids::[iterable]
             The Wikidata ids we want to obtain a property of.
         sparql_query_format::[str.format]
-             
-         
-         
+             String formatter which can simply be called with a list of space-separated qids to complete the
+             sparql query.
         value_label::[str]
             Label of property used in sparql query (needed to retrieve value from bindings in json).
         chunk_size::[float]
@@ -104,11 +180,8 @@ def _make_chunked_requests_wikidata(ids, sparql_query_format, value_label, chunk
             Number of seconds to wait between consecutive requests to Wikidata. A large enough
             value for this parameter ensures Wikidata will not stop answering requests from our machine.
         max_attempts::[int]
-        
-        
-        
-        
-           
+            The number of times to retry obtaining an answer for a single request if this keeps on failing.
+            Between each attempt, wait_between_chunks_secs is waited.
             
     Returns:
         mapping::[dict]
@@ -158,10 +231,22 @@ def _make_chunked_requests_wikidata(ids, sparql_query_format, value_label, chunk
                 
            
 def get_labels_of_wikidata_ids(ids, *args, **kwargs):
-    """Function querying Wikidata for human-readable English labels of the ids provided as parameters.
-    To avoid the server refusing requests, the ids are split into chuncks of desired size and a
-    different request is made for each chunk, waiting a certain amount of time between requests."""
+    """
+    Function querying Wikidata for human-readable English labels of the ids provided as parameters.
+    This function internally uses _make_chunked_requests_wikidata.
     
+    Params:
+        ids::[iterable]
+            The Wikidata ids we want to obtain the label of.
+        args::[tuple]
+             Additional positional arguments which will be passed directly _make_chunked_requests_wikidata.
+        kwargs::[dict]
+             Additional keyword arguments which will be passed directly _make_chunked_requests_wikidata.
+
+    Returns:
+        mapping::[dict]
+            Dictionary with keys the Wikidata ids and values the label of each id.    
+    """
     sparql_query_format = """SELECT ?item ?itemLabel
                              WHERE {{
                                  VALUES ?item {{ {} }}
@@ -172,6 +257,22 @@ def get_labels_of_wikidata_ids(ids, *args, **kwargs):
                                            
 
 def get_link_counts_of_wikidata_ids(ids, *args, **kwargs):
+    """
+    Function querying Wikidata for the link counts associated to each of the ids provided as parameters.
+    This function internally uses _make_chunked_requests_wikidata.
+    
+    Params:
+        ids::[iterable]
+            The Wikidata ids we want to obtain the link count of.
+        args::[tuple]
+             Additional positional arguments which will be passed directly _make_chunked_requests_wikidata.
+        kwargs::[dict]
+             Additional keyword arguments which will be passed directly _make_chunked_requests_wikidata.
+
+    Returns:
+        mapping::[dict]
+            Dictionary with keys the Wikidata ids and values the link count of each id.    
+    """
     sparql_query_format = """SELECT ?item ?linkcount
                              WHERE {{
                                  VALUES ?item {{ {} }}
@@ -182,10 +283,34 @@ def get_link_counts_of_wikidata_ids(ids, *args, **kwargs):
 
 
 def str_is_qid(string):
-    return bool(re.match(r"^Q\d+$", string))
-        
+    """
+    Utilitary function which returns True if the string passed as parameter is of form 'Q{integer}' and False otherwise.
     
+    Params:
+        string::[str]
+            The string we want to check the form of.
+            
+    Returns:
+        match::[bool]
+            Boolean describing whether string is of form 'Q{integer}' or not.
+    """
+    return bool(re.match(r"^Q\d+$", string))
+
+
+
 def ragged_nested_sequence_to_set(array):
+    """
+    Utilitary function transforming an array containing sub-arrays of different sizes into a set containing each element of
+    each sub-array.
+    
+    Params:
+        array::[np.array]
+            The array containing sub-arrays of different sizes.
+            
+    Returns:
+        elements_set::[set]
+            Set containing each element of each sub-array or input array.
+    """
     elements_set = set()
     
     for case in array.ravel():
@@ -196,9 +321,30 @@ def ragged_nested_sequence_to_set(array):
         
     return elements_set
     
-    
 
-def json_lines_generator(data_dir_or_path, print_progress_every = 1000000):  
+
+def json_lines_generator(data_dir_or_path, print_progress_every = 1000000):
+    """
+    Utilitary function implementing a generator of lines read from the .json.bz2 files contained in data_dir_or_path (if this
+    parameter points to a directory) or from the file data_dir_or_path (if this parameter points to a .json.bz2 file).
+    For each file in the directory (or just the file data_dir_or_path points to) and for each line in the compressed json file, this 
+    generator will read the line, decode it from json and yield the result. The generator returns when no more lines are to be read 
+    from any json files in the directory (or from the single json file data_dir_or_path points to).
+    
+    Params:
+        data_dir_or_path::[str]
+            The path to either a directory containing .json.bz2 files or the path to a single .json.bz2 file.
+        print_progress_every::[int]
+            The frequency (in terms of number of lines between events) at which to print the number of lines yielded by the
+            generator and the time elapsed until now.
+            
+    Yields:
+        line::[dict]
+            Dictionary returned by decoding each json line in the .json.bzw files in data_dir_or_path.
+            
+    Returns:
+        None
+    """
     # Sanity check of 'print_progress_every' parameter.
     if print_progress_every is not None:
         if not isinstance(print_progress_every, int) or print_progress_every <= 0:
@@ -235,6 +381,8 @@ def json_lines_generator(data_dir_or_path, print_progress_every = 1000000):
 
 
 @cache_to_file_pickle("utils-query_wikidata_for_linkcounts_and_labels", ignore_kwargs = ["print_progress_every"])
+
+
 def query_wikidata_for_linkcounts_and_labels(data_dir, speaker_info_file_path, print_progress_every = 10000000):    
     all_speakers, speakers_needing_linkcounts = _get_unique_speakers_dataset(data_dir = data_dir, 
                                                                              print_progress_every = print_progress_every)

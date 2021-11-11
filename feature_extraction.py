@@ -110,6 +110,10 @@ def extract_speaker_features(line, speaker_data, qid_labels, linkcounts, min_age
                                'screenwriter', 'singer', 'television actor', 'television presenter', 'television producer',
                                'university teacher', 'writer']
     
+    # TODO:
+    # Make a list of occupations which should be merged into a single one and do it.
+    occupations_to_merge = {}
+    
     speaker_occupations = speaker_data.get(line['qids'], {}).get('occupation', None)
     speaker_occupations = [] if speaker_occupations is None else speaker_occupations
     
