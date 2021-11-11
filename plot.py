@@ -56,8 +56,6 @@ def plot_speaker_feature_distribution(df, feature, n_bars = 10, figsize = (15, 4
     fig.tight_layout()
     
     
-    
-
 def plot_co_occurrence_matrix(data, feature_1, feature_2, figsize = (10, 10), weight = None, keep_top_n = None, 
                               annot = True, fmt = '.0f', **heatmap_kwargs):
     
@@ -100,6 +98,45 @@ def plot_co_occurrence_matrix(data, feature_1, feature_2, figsize = (10, 10), we
     sns.heatmap(df, square = True, mask = mask, annot = annot, fmt = fmt, norm = LogNorm(), **heatmap_kwargs)    
     
     plt.title(f"Heatmap of Quote Counts between {feature_1.title()} and {feature_2.title()}", pad = 20)    
+    plt.xlabel(feature_1.title())
+    plt.ylabel(feature_2.title())
+    plt.show()
+    
+    
+def plot_boxplot(data, feature_1, feature_2, figsize = (10, 10), weight = None, keep_top_n = None, 
+                 annot = True, fmt = '.0f', **heatmap_kwargs):
+    
+    co_occurrence_counter = {}
+
+    data = data[{feature_1, feature_2}].dropna(axis = 0, how = 'any')
+    for _, row in data.iterrows():        
+        values_feature_1 = row[feature_1]
+        values_feature_2 = set(row[feature_2])
+        
+        for value_2 in values_feature_2:                
+            weight_to_add = 1 if weight is None else row[weight]
+                
+            co_occurrence_counter[(value_1, value_2)] = co_occurrence_counter.get((value_1, value_2), 0) + weight_to_add
+
+    df = pd.Series(co_occurrence_counter.values(), 
+                   index = pd.MultiIndex.from_tuples(co_occurrence_counter.keys()), 
+                   dtype = 'int').unstack()
+        
+    if keep_top_n is not None:
+        marginals_rows = df.sum(axis = 1)
+        most_common_incices = marginals_rows.sort_values(ascending = False)[:keep_top_n].index
+        marginals_cols = df.sum(axis = 0)
+        most_common_cols = marginals_cols.sort_values(ascending = False)[:keep_top_n].index        
+        df = df[df.index.isin(most_common_incices)][most_common_cols]
+
+    # Sort columns and lines in alphabetical order to correctly display heatmap. 
+    df = df.sort_index()
+    
+    plt.figure(figsize = figsize)
+    
+    sns.boxplot(df, square = True, mask = mask, annot = annot, fmt = fmt, norm = LogNorm(), **heatmap_kwargs)    
+    
+    plt.title(f"Boxplot of Quote Counts between {feature_1.title()} and {feature_2.title()}", pad = 20)    
     plt.xlabel(feature_1.title())
     plt.ylabel(feature_2.title())
     plt.show()
