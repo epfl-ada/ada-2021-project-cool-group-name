@@ -3,7 +3,7 @@ Authors: Andrea Oliveri, Célina Chkroun, Kaourintin Tamine, Mattia Lazzaroni
 
 
 ## Abstract 
-In a world where a simple tweet from someone can drastically change things for millions online, we want to identify what causes can be linked to someone having an impact on huge audiences. A metric of this is the number of individual quotations in newspapers. By analysing the distribution of extremely viral quotes we want to determine what characteristics are important and build guidelines, if possible, to optimize the chance of a quote reaching a wider range of people. These guidelines would constitute very interesting tools in politics and research for example to better chose the topic of a quote and which representative of their organization should say it to make the quote more likely to become viral.
+In a world where a simple tweet from someone can drastically change things for millions online, we want to identify what causes can be linked to someone having an impact on huge audiences. A metric of this is the number of individual quotations in newspapers. By analysing the distribution of extremely viral quotes we want to determine what characteristics are important and build guidelines, if possible, to optimize the chance of a quote reaching a wider range of people. These guidelines would constitute very interesting tools in politics and research for example to better choose the content of of speeches to make them more likely to be quoted. 
 
 
 ## **Research Questions:**
