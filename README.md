@@ -38,7 +38,7 @@ We have two separate datasets:
 bertTopic allows us to classify the quotation set into topics. It makes a lot of sense to split the quotes into topic groups, for data visualization as well as for model training and other methods that might want the quotes to be split by topic. 
 
 #### "Bias inference analysis" (implemented and dropped)
-https://www.researchgate.net/profile/Ali-Minai/publication/267559458_Online_News_Media_Bias_Analysis_using_an_LDA-NLP_Approach/links/570b2cf808aea66081376d8b/Online-News-Media-Bias-Analysis-using-an-LDA-NLP-Approach.pdf
+[Bias analysis](https://www.researchgate.net/profile/Ali-Minai/publication/267559458_Online_News_Media_Bias_Analysis_using_an_LDA-NLP_Approach/links/570b2cf808aea66081376d8b/Online-News-Media-Bias-Analysis-using-an-LDA-NLP-Approach.pdf) approach to find quote topics
 Aim may be to help politicians make their quotes more viral
 May want to try make predictions about when quote will become viral (after 1h, 2h, ...)
 We tried implementing this method but it was computationally too heavy especially memory wise (we have 16 gigas of ram and it was insufficient). Anyways, we prefered using
@@ -66,10 +66,10 @@ The second milestone on exploratory data analysis was very hard to split into ev
 - [Cache](Cache) [dir]: Contains output files from long computations.
 - [Data](Data) [dir]: Contains the dataset as provided by the course. Includes quotebank's json files and the speaker attributes parquet file.
 - [Project](Project.ipynb) [jupyter notebook]: The jupyter on which the analysis takes place.
-- [Utilitary function for feature extraction](feature_extraction.py) [python script]: The jupyter on which the analysis takes place.
-- [Utilitary function to visualize the data](plot.py) [python script]: The jupyter on which the analysis takes place.
-- [Utilitary function to help managing the dataset](utils.py) [python script]: The jupyter on which the analysis takes place.
+- [Utilitary functions for feature extraction](feature_extraction.py) [python script]: 
+- [Utilitary functions to visualize the data](plot.py) [python script]: 
+- [Utilitary functions to help managing the dataset](utils.py) [python script]: 
 
 ## Questions
 
-**TO ADD IF ANY COULD BE USEFUUUUUUUUUUUUUUUL**
+**TO ADD IF ANY QUESTIONS, COULD BE USEFUUUUUUUUUUUUUUUL**
