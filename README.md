@@ -59,7 +59,7 @@ Milestone 2 (Friday 12th november) : finish the fusing of the two datasets, fini
 ## Organization within the team
 
 The second milestone on exploratory data analysis was very hard to split into even packets of work. Most functions had to be rethought and rewritten more than once and this meant that it was hard for someone to try things on their side until the data structure was fixed in place. 
-We hope that for the following 
+Now that the data analysis and extraction is finished we expect things to be more easily dispatchable among the team. 
 
 
 ## Repository organization
