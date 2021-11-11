@@ -18,18 +18,17 @@ Other characteristics will be explored like the date, correlation to real world 
 
 
 ## Methods
-
-### Collect data of interest from multiple datasets
+1. Collect data of interest from multiple datasets
 We have two separate datasets:
 - [`Wikidata`](https://www.wikidata.org/wiki/Wikidata:Main_Page): dataset which contains the information on persons/speakers (date of birth, gender, occupation...).
 - [`Quotebank`](https://zenodo.org/record/4277311#.YYpVGWDMJhE): corpus of quotations from a decade of news extracted using Quobert.
 
  The first basic step/method for this project is to fuse these two datasets into an exploitable structure for our data analysis.
 
-### Dealing with large dataset
+2. Dealing with large dataset
 **TO DO**
 
-### Exploring the data
+3. Exploring the data
 
 #### Explore speaker's features
 
@@ -46,19 +45,18 @@ BerTopic which provided more useful functionalities
 #### Using bertTopic (NLP based technique)
 bertTopic allows us to classify the quotation set into topics. It makes a lot of sense to split the quotes into topic groups, for data visualization as well as for model training and other methods that might want the quotes to be split by topic. 
 
-### Logistic regression/random Forest/Linear Regression
+4. Classification: Logistic regression/random Forest/Linear Regression
 We plan on parsing the processed data and convert each line into a feature vector and associate them with a viral/not viral label.
 We will try to see if we can apply penalties to identify if some features are relevant or not.
  
-#### Proposed Timeline
+## Proposed Timeline
 Milestone 2 (Friday 12th november) : finish the fusing of the two datasets, finish the exploratory data analysis, implement bertTopic to split quotes and visualize and start thinking about the data story we want to start working on for the rest of the semester. 
 
-#### Organization within the team
+## Organization within the team
 The second milestone on exploratory data analysis was very hard to split into even packets of work. Most functions had to be rethought and rewritten more than once and this meant that it was hard for someone to try things on their side until the data structure was fixed in place. 
 
 
 ## Repository organization
-
 - [Cache](Cache) [dir]: Contains output files from long computations.
 - [Data](Data) [dir]: Contains the dataset as provided by the course. Includes quotebank's json files and the speaker attributes parquet file.
 - [Project](Project.ipynb) [jupyter notebook]: The jupyter on which the analysis takes place.
