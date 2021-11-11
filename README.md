@@ -1,7 +1,5 @@
-
 # Increasing the chances of your speech to go viral : an interrogation on what helps catch the attention of modern day fickle newsreaders 
-
-
+Authors: Andrea Oliveri, Célina Chkroun, Kaourintin Tamine, Mattia Lazzaroni
 
 ## Abstract 
 In a world where a simple tweet from someone can drastically change things for millions online, we want to identify what causes can be linked to someone having an impact on huge audiences. A metric of this is the number of individual quotations in newspapers. By analysing the distribution of extremely viral quotes we want to determine what characteristics are important and build guidelines, if possible, to optimize the chance of a quote to reach a wider range of people. These guidelines would constitute very interesting tools in politics and research for example to better chose the topic of a quote and which representative of their organization should say it to make the quote more likely to become viral.
@@ -16,10 +14,25 @@ There are many trends that seem totally random in our society, from songs (Gnam 
 Keywords? Age of the speaker? Gender? Occupation? What are the characteristics that makes us be able to say this person's speech will be more quoted than this other one, and allow us to say that changing this parameter will make the person more likely to have impact.
 Other characteristics will be explored like the date, correlation to real world events, nationality, newspaper type and the variance of date per quote (distribution of quote repetition).
 
+#### **Does the number of words in a quote inluence its success? And are there any topics more recurrent in more viral quotes? **
+
+
 ## Methods
 
-#### Initial data scraping (is scraping the right word here)
-We have two separate datasets, the wikiData dataset which contains the information on persons/speakers (date of birth, gender, occupation...). And Quotebank, a corpus of quotations from a decade of news extracted using Quobert. https://zenodo.org/record/4277311#.YYpVGWDMJhE. The first basic step/method for this project is to fuse these two datasets into an exploitable structure for our data analysis. 
+#### Collect data of interest from multiple datasets
+We have two separate datasets:
+- [`Wikidata`](https://www.wikidata.org/wiki/Wikidata:Main_Page): dataset which contains the information on persons/speakers (date of birth, gender, occupation...).
+- [`Quotebank`](https://zenodo.org/record/4277311#.YYpVGWDMJhE): corpus of quotations from a decade of news extracted using Quobert.
+
+ The first basic step/method for this project is to fuse these two datasets into an exploitable structure for our data analysis.
+
+#### Dealing with large dataset
+**TO DO**
+
+#### Exploring the data
+
+#### Using bertTopic (NLP based technique)
+bertTopic allows us to classify the quotation set into topics. It makes a lot of sense to split the quotes into topic groups, for data visualization as well as for model training and other methods that might want the quotes to be split by topic. 
 
 #### "Bias inference analysis" (implemented and dropped)
 https://www.researchgate.net/profile/Ali-Minai/publication/267559458_Online_News_Media_Bias_Analysis_using_an_LDA-NLP_Approach/links/570b2cf808aea66081376d8b/Online-News-Media-Bias-Analysis-using-an-LDA-NLP-Approach.pdf
