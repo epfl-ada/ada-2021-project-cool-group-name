@@ -16,7 +16,7 @@ Keywords? Age of the speaker? Gender? Occupation? What are the characteristics t
 Other characteristics will be explored like the date, correlation to real world events, nationality, newspaper type and the variance of date per quote (distribution of quote repetition).
 
 #### **Does the number of words in a quote inluence its success? And are there any topics more recurrent in more viral quotes?**
-
+We will also explore if the textual content of the quote has an impact on the virality. At first, we chose to look at the word count of the quote and, later on, we wanted to extract the topic(s) of the quotes to see if some of them are more recurrent in the viral quotes or not. It would be interesting to find if the viral quotes have a particular length, because it can be an useful information for example for a politician that wants to attract people's attention. Same thing for the topics, it could be informative for a candidate at presidency to see which topics are given more attention to people.
 
 ## Methods
 
@@ -28,7 +28,7 @@ We have two separate datasets:
  The first basic step/method for this project is to fuse these two datasets into an exploitable structure for our data analysis.
 
 ### 2. Dealing with large dataset
-**TO DO**
+**TO DO ANDREAAAAAAAAAA**
 
 ### 3. Exploring the data
 
@@ -66,8 +66,10 @@ The second milestone on exploratory data analysis was very hard to split into ev
 - [Cache](Cache) [dir]: Contains output files from long computations.
 - [Data](Data) [dir]: Contains the dataset as provided by the course. Includes quotebank's json files and the speaker attributes parquet file.
 - [Project](Project.ipynb) [jupyter notebook]: The jupyter on which the analysis takes place.
-
+- [Utilitary function for feature extraction](feature_extraction.py) [python script]: The jupyter on which the analysis takes place.
+- [Utilitary function to visualize the data](plot.py) [python script]: The jupyter on which the analysis takes place.
+- [Utilitary function to help managing the dataset](utils.py) [python script]: The jupyter on which the analysis takes place.
 
 ## Questions
 
-TO ADD IF ANY
+**TO ADD IF ANY COULD BE USEFUUUUUUUUUUUUUUUL**
