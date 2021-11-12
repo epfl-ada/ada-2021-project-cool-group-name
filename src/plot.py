@@ -3,6 +3,8 @@ import seaborn as sns
 import pandas as pd
 import numpy as np
 from matplotlib.colors import LogNorm
+from IPython.display import SVG
+
 
     
 def plot_speaker_feature_distribution(df, feature, n_bars = 10, figsize = (15, 4), **plot_kwargs): 
@@ -163,7 +165,7 @@ def plot_boxplot_for_each_discrete_value(data, feature_continuous, feature_discr
         feature_discrete::[str]
             Name of the discrete feature for each value of which a boxplot will be generated.
         figsize::[tuple(float, float)]
-            The size of the figure in the boxplots will be drawn.
+            The size of the figure in which the boxplots will be drawn.
         keep_top_n::[int]
             If not None, limits the number of boxplots displayed (keeping only those corresponding to the most frequent discrete values).
         filter_func::[function]
@@ -213,3 +215,50 @@ def plot_boxplot_for_each_discrete_value(data, feature_continuous, feature_discr
     plt.ylabel(feature_continuous.title())
     plt.show()
     
+    
+def plot_hist_ecdf(data, x, weights = None, title = "", figsize = (16, 5), hist_kwargs = {}, ecdf_kwargs = {}):
+    """
+    Function for plotting histogram and empirical cumulative distribution function for column x in dataframe data.
+    
+    Params:
+        data::[pd.DataFrame]
+            DataFrame containing column x in which each row is a single scalar value.
+        x::[str]
+            Column in data for which to plot the distribution of.
+        weights::[str | None]
+            Column in data to use as weights of corresponding values in x. If None, each value has unitary weight.
+        title::[str]
+            Suptitle to histogram and  empirical cumulative distribution.
+        figsize::[tuple(float, float)]
+            The size of the figure in which the histogram and empirical cumulative distribution will be drawn.
+        hist_kwargs::[dict]
+            Additional keyword arguments to pass to sns.histplot.
+        ecdf_kwargs::[dict]
+            Additional keyword arguments to pass to sns.ecdfplot.
+            
+    Returns:
+        None    
+    """    
+    fig, axes = plt.subplots(1, 2, figsize = figsize)
+    
+    sns.histplot(data, x = x, weights = weights, ax = axes[0], **hist_kwargs)
+    sns.ecdfplot(data, x = x, weights = weights, ax = axes[1], **ecdf_kwargs)
+    plt.suptitle(title)
+    plt.show()
+    
+    
+def plotly_to_svg(fig):
+    """
+    Function converting a plotly figure to an IPython SVG image.
+    
+    Params:
+        fig::[plotly.graph_objects.Figure]
+            Plotly figure to be converted to svg.
+        
+    Returns:
+        svg_fig::[IPython.core.display.SVG]
+            Input figure converted into IPython SVG image.
+    """
+    
+    svg_fig_bytes = fig.to_image(format = "svg")
+    return SVG(svg_fig_bytes)
