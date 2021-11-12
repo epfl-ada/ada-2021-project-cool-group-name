@@ -1,88 +1,102 @@
-# Increasing the chances of your speech to go viral : an interrogation on what helps catch the attention of modern day fickle newsreaders 
-Authors: Andrea Oliveri, Célina Chkroun, Kaourintin Tamine, Mattia Lazzaroni
-
+# Increasing the chances of your speech to go viral: an interrogation on what helps catch the attention of modern day fickle newsreaders 
+**Authors:** Andrea Oliveri, Célina Chkroun, Kaourintin Tamine, Mattia Lazzaroni
 
 ## Abstract 
-In a world where a simple tweet from someone can drastically change things for millions online, we want to identify what causes can be linked to someone having an impact on huge audiences. A metric of this is the number of individual quotations in newspapers. By analysing the distribution of extremely viral quotes we want to determine what characteristics are important and build guidelines, if possible, to optimize the chance of a quote reaching a wider range of people. These guidelines would constitute very interesting tools in politics and research for example to better choose the content of of speeches to make them more likely to be quoted. 
+In a world where the internet grants people access to audiences of millions of people, we want to identify what factors can be linked to someone reaching huge audiences. A metric of how many people are reached by a speaker is the number of individual quotations in newspapers. By analysing the distribution of extremely viral quotes we want to determine what characteristics are important and build guidelines, if possible, to optimize the chance of a quote reaching a wider range of people. These guidelines would constitute very interesting tools in politics and research for example to better choose the topic and the speaker delivering a concept to make them more likely to be quoted. 
 
+## Research Questions:
 
-## **Research Questions:**
+#### Are there any identifiable characteristics of the speaker which make it more "quotable"?
+Age of the speaker? Gender? Occupation? Are there characteristics that makes us be able to say this person's speech will be more quoted than this other one, and allow us to say that changing this parameter will make the person more likely to have impact.
 
-#### **Are the extremely viral quotes predominantly random? Does high popularity stem mainly from random interest swings from the public?**
-There are many trends that seem totally random in our society, from songs  to memes that overnight explode in popularity. Naturally, newspaper quotes are generally centered around more serious topics and might not be affected by these random phenomenons. It is quite an interesting question to try to quantify by "how much" these random trends are present in the quotation world.
+#### Does the number of words in a quote or the topic influence its success?
+We will also explore if the textual content of the quote has an impact on the virality. We will mainly investigate two factors: the number of words in the quote and its topic. 
 
-#### **Are there any identifiable interesting characteristics from which we could deduce valuable lessons as to how to make oneself "quotable"?**
-Keywords? Age of the speaker? Gender? Occupation? What are the characteristics that makes us be able to say this person's speech will be more quoted than this other one, and allow us to say that changing this parameter will make the person more likely to have impact.
-Other characteristics will be explored like the date, correlation to real world events, nationality, newspaper type and the variance of date per quote (distribution of quote repetition).
+## Datasets:
+We have used two separate datasets:
+- [`Quotebank`](https://zenodo.org/record/4277311#.YYpVGWDMJhE): corpus of quotations from news extracted using Quobert between 2015 and 2020.
+- [`Wikidata`](https://www.wikidata.org/wiki/Wikidata:Main_Page): a database containing structured information about subjects in Wikimedia. In this project we will use it to gather information about the speaker of the quotes, such as gender, nationality and occupations.
 
-#### **Does the number of words in a quote influence its success? And are there any topics more recurrent in more viral quotes?**
-We will also explore if the textual content of the quote has an impact on the virality. At first, we chose to look at the word count of the quote and, later on, we wanted to extract the topic(s) of the quotes to see if some of them are more recurrent in the viral quotes or not. It would be interesting to find if the viral quotes have a particular length, because it can be an useful information for example for a politician that wants to attract people's attention. Same thing for the topics, it could be informative for a candidate at presidency to see which topics are given more attention to people.
 
 ## Methods
 
-### 1. Collect data of interest from multiple datasets
-We have two separate datasets:
-- [`Wikidata`](https://www.wikidata.org/wiki/Wikidata:Main_Page): dataset which contains the information on persons/speakers (date of birth, gender, occupation...).
-- [`Quotebank`](https://zenodo.org/record/4277311#.YYpVGWDMJhE): corpus of quotations from a decade of news extracted using Quobert.
-
-The first basic step/method for this project is to fuse these two datasets into an exploitable structure for our data analysis.
+### 1. Collect data from Wikidata
+The first basic step of this project is to extract all needed information from Wikidata.
+To do so, the qids of all speakers in Quotebank are collected, as well as the ones for which the quote attribution was ambiguous.
+With these we can filter out rows and columns we are not interested in from the provided [`speaker_attributes.parquet`](Data/speaker_attributes.parquet), and query from Wikidata the link counts of ambiguous speakers.
+Finally, we can query Wikidata for human-readable English labels of the speaker attributes we are interested in.
 
 ### 2. Dealing with large dataset
-**TO DO ANDREAAAAAAAAAA**
+Due to the large size and heavy compression of the Quotebank dataset, working with it presents two challenges:
+
+1) Dataset can't be entirely fit in RAM
+2) Parsing dataset requires a long time
+
+To deal with the first issue, we decompress and load the lines from the json files one by one.
+
+To deal with the second issue, a caching system to disk was implemented to store results of long computation. This system is implemented as an easy-to-use Python decorator (for a detailed explaination, read the doctring of `cache_to_file_pickle` in [src/utils.py](src/utils.py)).
+
+Note that, after filtering, the speaker attributes data could easily be stored entirely in RAM while working on Quotebank line by line.
 
 ### 3. Exploring the data
 
-#### Analysis of number of occurences of the quotes
-We first analyzed the number of occurences of all the quotes present in the dataset in order to define the threshold above which a quote will be considered as viral.
+#### Analysis number of occurences of quotes
+We first analyzed the number of occurences of all the quotes present in Quotebank and defined the threshold above which a quote will be considered as viral.
 
 #### Explore speaker's features
-We also conducted an analysis on speaker's features. 
-At first, we explored the raw distribution of the speaker's features and, after that, we weighted the distribution in 2 different ways (by the number of quotes and by the total number of occurences of quotes per speaker). Further analysis were performed to look at the co-occurences of different values per feature when multiple values are given per speaker. The co-occurences between different features were also analyzed.
+We explored the raw distribution of the speaker's features as well as the distributions obtained when weighting by the number of different quotes of the speaker and by the total number of occurrences of all his quotes. Further analysis looked at the co-occurences of different values for feature for which multiple values are given for a single speaker (for exemple the co-occurrence matrix of occupations assigned to a speaker), as well as the co-occurences between values of different features.
 
-#### Length of Quotes
-We also analyzed the length of quotes by plotting the distribution of length of quotes and its proportion.
+#### Length of quotes
+We analyzed the distributions of lenghts of all quotes in Quotebank.
 
-#### Extraction and Visualization of the Quote Topics
-At first, we tried to extract the topics of the quote using a [Bias inference analysis](https://www.researchgate.net/profile/Ali-Minai/publication/267559458_Online_News_Media_Bias_Analysis_using_an_LDA-NLP_Approach/links/570b2cf808aea66081376d8b/Online-News-Media-Bias-Analysis-using-an-LDA-NLP-Approach.pdf) approach to find quote topics.
-Nevertherless, we found out by implementing this method that it was computationally too heavy especially memory-wise.
+#### Extraction and visualization of quote topics
+At first, we tried to extract the topics of the quote using `Latent semantic analysis`<sup>[1](https://en.wikipedia.org/wiki/Latent_semantic_analysis) [2](https://scikit-learn.org/stable/tutorial/text_analytics/working_with_text_data.html) [3](https://towardsdatascience.com/machine-learning-nlp-text-classification-using-scikit-learn-python-and-nltk-c52b92a7c73a)</sup>.
+However, we found out by implementing this method that it was too computationally heavy and required too much RAM. 
 
-We then decided to try to extract the topics using [BERTopic](https://towardsdatascience.com/dynamic-topic-modeling-with-bertopic-e5857e29f872) .
-BERTopic is a NLP based technique allowing us to classify the quotation set into topics and on top, many useful functionalities are provided with it.
-Indeed, it makes a lot of sense to split the quotes into topic groups, for data visualization as well as for model training and other methods that might want the quotes to be split by topic. 
+Upon further research, we stumbled upon a (great) package called [`BERTopic`](https://github.com/MaartenGr/BERTopic)<sup>[1](https://towardsdatascience.com/dynamic-topic-modeling-with-bertopic-e5857e29f872)</sup>, implementing all the tools we needed to quickly extract the main topics present in the Quoteback dataset, visualize them and their importance, ...
+Moreover, part of the computations can be hugely accelerated using a GPU. Using only 1% of our quotes, we successfully trained the model, extracted and visualized the main topics.
 
-### 4. Training a classifier
-In order to try to predict the potential of a new quote to be viral, we wanted to train a classifier. We though about using Logistic regression, Random Forest or Linear Regression as a model.
-To train it, we plan on parsing the processed data and convert each line into a feature vector and associate them with a viral/not viral label.
-We will then try to see if we can apply penalties to identify if some features are relevant or not.
- 
-## Proposed Timeline
-Next steps to go on with the project:
-- Explore further correlation between features
-- Train bert on larger portion of dataset
-- Try training bert with compute_probability parameter = True such that we can predict not only most likely topic but probability of each topic of each quote
-- Select meaningful features
-- Merge these data into a feature vector and associate a label viral/not viral to it
-- Train multiple types of classifier to see if features meaningful and if classifier works well on a test set
-- Use regularizarion on well-performing models to reduce number of non-zero coefficients and filter actually useful features
-- Try to conclude something from the found results and write the data story
+### 4. Training models
+In order to try to predict the potential of a new quote to be viral, we wanted to both train classifiers for the labels viral/not-viral and a regressor for the number of occurrences.  
+
+We though about using Logistic regression, Support vector machines or Linear Regression as classifiers for their easy interpretability.
+For the regressor, we plan to use linear regression for the same reason.
+
+To train the models, each line of Quotebank dataset will be converted into a feature vector (or discarded if feature is missing) and a binary label for classifiers or an interger output for the regressor. Training will be performed on a randomly sampled 70% subset of these lines (this also includes the validation set for hyperparameters tuning) and the rest will be used for testing.
+
+We will then try to see if we can apply weight penalties to filter out the least relevant features.
+
+## Proposed timeline
+By 19/11/2021:
+
+1. Explore further the possible correlations between features
+2. Train BERTopic on larger portion of dataset
+3. Try training BERTopic with parameter `compute_probability = True` such that we can predict not only most likely topic but probability of each topic of each quote
+
+By 01/12/2021:
+
+4. Create feature vectors and labels for quotes in the dataset
+5. Train classifiers and regressor, optimize hyperparameters and analyse performance on test set
+6. Use regularizarion to filter out least relevant features
+
+By 17/12/2021:
+
+7. Draw conclusions, if possible, from learned feature coefficients
+8. Write data story
 
 ## Organization within the team
-Within the team, the organization will be as follow:
-- Member 1: Continue the data exploration (feature's correlation, retraining Bert).
-- Member 2: Training multiple classifier, select correct method and hyperparameters.
-- Member 3: Focus on visualization of the project's results and think about how presenting them into the final data story.
-- Member 4: Writing of the data story.
+Within the team, the organization will be as follow (number refer to those in [Proposed Timeline](#proposed-timeline), note that people will work in parallel on different objectives):
+- *Andrea:* 4, 5, 6, 7, 8
+- *Céline:* 2, 3, 7, 8
+- *Kaourintin:* 1, 4, 7, 8
+- *Mattia:* 5, 6, 7, 8
 
-## Repository organization
+## Repository structure
 
-- [Cache](Cache) [dir]: Contains output files from long computations.
-- [Data](Data) [dir]: Contains the provided dataset (quotebank's json files and speaker attributes parquet file).
-- [Project](Project.ipynb) [jupyter notebook]: The jupyter in which the analysis takes place.
-- [Source](src) [dir] Contains .py modules where utilitary functions are implemented.
-    - For feature extraction: feature_extraction.py
-    - For visualization: plot.py
-    - To manage the data: utils.py
-
-## Questions
-
-**TO ADD IF ANY QUESTIONS, COULD BE USEFUUUUUUUUUUUUUUUL**
+- [Cache](Cache): Contains results of long computations.
+- [Data](Data): Contains the provided datasets (Quotebank's json files and [`speaker_attributes.parquet`](Data/speaker_attributes.parquet)).
+- [src](src): Contains utilitary modules implementing:
+    - Feature extraction: [feature_extraction.py](src/feature_extraction.py)
+    - Visualization: [plot.py](src/plot.py)
+    - Management of data: [utils.py](src/utils.py)
+- [Project.ipynb](Project.ipynb): Notebook in which the analysis is performed.
