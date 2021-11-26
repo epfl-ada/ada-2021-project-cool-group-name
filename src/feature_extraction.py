@@ -159,17 +159,21 @@ def extract_speaker_features(line, speaker_data, qid_labels, linkcounts, min_age
         return
         
     # Extract gender of the speaker. Possible genders are summarized in 3 categories: "male", "female", "other".
-    speaker_gender = speaker_data.get(line['qids'], {}).get('gender', None)
+    speaker_gender_qid = speaker_data.get(line['qids'], {}).get('gender', None)
     
-    if speaker_gender is None or len(speaker_gender) == 0:
+    if speaker_gender_qid is None or len(speaker_gender_qid) == 0:
         return
-     
-    features['speaker_gender'] = 'other'
-    if len(speaker_gender) == 1:
-        speaker_gender, = speaker_gender
-        speaker_qid_label = qid_labels.get(speaker_gender, '').lower()        
+    
+    speaker_gender = 'other'
+    if len(speaker_gender_qid) == 1:
+        speaker_gender_qid, = speaker_gender_qid
+        speaker_qid_label = qid_labels.get(speaker_gender_qid, '').lower()
         if speaker_qid_label in ['male', 'female']:
-            features['speaker_gender'] = speaker_qid_label
+            speaker_gender = speaker_qid_label
+            
+    features['speaker_gender_OTHER']  = int(speaker_gender == 'other')
+    features['speaker_gender_FEMALE'] = int(speaker_gender == 'female')
+    features['speaker_gender_MALE']   = int(speaker_gender == 'male')
             
     # Extract which of the most common nationalities the speaker has.
     most_common_nationalities = ['australia', 'canada', 'france', 'germany', 'india', 'new zealand', 
@@ -177,34 +181,32 @@ def extract_speaker_features(line, speaker_data, qid_labels, linkcounts, min_age
     
     speaker_nationalities = speaker_data.get(line['qids'], {}).get('nationality', None)
     speaker_nationalities = [] if speaker_nationalities is None else speaker_nationalities
+    speaker_nationalities = {qid_labels.get(nationality, '').lower() for nationality in speaker_nationalities}
     
-    features['speaker_nationality'] = {nationality: False for nationality in most_common_nationalities}
-    for nationality in speaker_nationalities:
-        nationality = qid_labels.get(nationality, '').lower()
-        if nationality in features['speaker_nationality']:
-            features['speaker_nationality'][nationality] = True
+    for nationality in most_common_nationalities:
+        features[f'speaker_nationality_{nationality.upper()}'] = int(nationality in speaker_nationalities)            
     
     # Extract which of the most common occupation the speaker has.
-    most_common_occupations = ['actor', 'american football player', 'association football player', 'baseball player',
+    most_common_occupations = ['american football player', 'association football player', 'baseball player',
                                'basketball player', 'businessperson', 'chief executive officer', 'composer',
-                               'entrepreneur', 'film actor', 'film director', 'film producer', 'investor', 'journalist',
-                               'lawyer', 'musician', 'non-fiction writer', 'politician', 'researcher', 'restaurateur',
-                               'screenwriter', 'singer', 'television actor', 'television presenter', 'television producer',
-                               'university teacher', 'writer']
+                               'entrepreneur', 'film director', 'investor', 'journalist', 'lawyer', 'musician',
+                               'politician', 'researcher', 'restaurateur', 'screenwriter', 'singer', 
+                               'television presenter', 'university teacher']
     
-    # TODO:
-    # Make a list of occupations which should be merged into a single one and do it.
-    occupations_to_merge = {}
+    occupations_with_aliases = {'actor': ['film actor', 'television actor'],
+                                'film / television producer': ['film producer', 'television producer'],
+                                'writer': ['writer', 'non-fiction writer']}
     
     speaker_occupations = speaker_data.get(line['qids'], {}).get('occupation', None)
     speaker_occupations = [] if speaker_occupations is None else speaker_occupations
+    speaker_occupations = {qid_labels.get(occupation, '').lower() for occupation in speaker_occupations}
     
-    features['speaker_occupation'] = {occupation: False for occupation in most_common_occupations}
-    for occupation in speaker_occupations:
-        occupation = qid_labels.get(occupation, '').lower()
-        if occupation in features['speaker_occupation']:
-            features['speaker_occupation'][occupation] = True
-            
+    for occupation in most_common_occupations:                
+        features[f'speaker_occupation_{occupation.upper()}'] = int(occupation in speaker_occupations)
+   
+    for occupation, occupation_aliases in occupations_with_aliases.items():
+        features[f'speaker_occupation_{occupation.upper()}'] = int(any(alias in speaker_occupations for alias in occupation_aliases))
+                
     return features
     
 
@@ -260,8 +262,5 @@ def preprocess_line(line, speaker_data, qid_labels, linkcounts):
     
     # Save quote as-is because pre-processing occurrs before BERT training.
     preprocessed_line['quotation'] = line['quotation']
-    
-    # Extract domains from news urls.
-    # preprocessed_line['domains'] = domains_from_urls(line['urls'])
     
     return preprocessed_line

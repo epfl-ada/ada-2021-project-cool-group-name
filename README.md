@@ -89,7 +89,7 @@ By 17/12/2021:
 ## Organization within the team
 Within the team, the organization will be as follow (number refer to those in [Proposed Timeline](#proposed-timeline), note that people will work in parallel on different objectives):
 - *Andrea:* 4, 5, 6, 7, 8
-- *Céline:* 2, 3, 7, 8
+- *Célina:* 2, 3, 7, 8
 - *Kaourintin:* 1, 4, 7, 8
 - *Mattia:* 5, 6, 7, 8
 
