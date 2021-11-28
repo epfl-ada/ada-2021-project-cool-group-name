@@ -130,13 +130,16 @@ def cache_to_file_pickle(filename, cache_dir = 'Cache', ignore_kwargs = None):
                 # Making a hashable representation of kwargs dict.
                 params = recursive_std_types_to_tuple(params)
             
-                # If necessary, compute the function output.
-                if params not in cache:
-                    cache[params] = function(**kwargs)
+                # If result available in cache, short-circuit computation and rewriting of cache to persistent storage.
+                return cache[params]
+                
+                # Otherwise, compute the function output.
+                cache[params] = function(**kwargs)
+ 
             except Exception as e:
                 execution_exception = e
                 
-            # If exception was thrown, it is passed through to outside of decorator.
+            # If exception was thrown, it is passed through to outside of decorator (and cache is not modified in persistent storage).
             if execution_exception is not None:
                 raise execution_exception
                 
