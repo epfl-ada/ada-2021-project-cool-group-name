@@ -131,7 +131,8 @@ def cache_to_file_pickle(filename, cache_dir = 'Cache', ignore_kwargs = None):
                 params = recursive_std_types_to_tuple(params)
             
                 # If result available in cache, short-circuit computation and rewriting of cache to persistent storage.
-                return cache[params]
+                if params in cache:
+                    return cache[params]
                 
                 # Otherwise, compute the function output.
                 cache[params] = function(**kwargs)
