@@ -54,14 +54,14 @@ def cache_to_file_pickle(filename, cache_dir = 'Cache', ignore_kwargs = None):
         manner (for exemple dealing with randomness in dictionary and set elements positions.
 
         Params:
-            obj::[int | float | str | list | tuple | set | dict]
+            obj::[int | float | str | bool | list | tuple | set | dict]
                 Python standard type object which we want to convert into an hashable deterministic form.
             
         Returns:
-            hashable_obj::[int | float | str | tuple]
+            hashable_obj::[int | float | str | bool | tuple]
                 Hashable version of input object.
         """
-        if isinstance(obj, (int, float, str)):
+        if isinstance(obj, (int, float, str, bool)):
             return obj
 
         elif isinstance(obj, (list, tuple)):
@@ -123,13 +123,13 @@ def cache_to_file_pickle(filename, cache_dir = 'Cache', ignore_kwargs = None):
                     cache = pickle.load(file)
             
             execution_exception = None
-            try:                
+            try:
                 # If some kwargs can be ignored as they don't change final result, do not include them in key.
                 params = {key: val for key, val in kwargs.items() if key not in ignore_kwargs} if ignore_kwargs is not None else kwargs
-                                
+
                 # Making a hashable representation of kwargs dict.
                 params = recursive_std_types_to_tuple(params)
-            
+                
                 # If result available in cache, short-circuit computation and rewriting of cache to persistent storage.
                 if params in cache:
                     return cache[params]

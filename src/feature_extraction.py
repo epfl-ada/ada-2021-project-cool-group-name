@@ -1,6 +1,4 @@
 import re
-from collections import Counter
-
 
 
 def get_speaker_age(birth_date, quote_date):
@@ -84,26 +82,7 @@ def solve_ambiguous_speakers(speakers_qids, linkcounts):
     return max(speakers_linkcounts, key = speakers_linkcounts.get)
 
 
-
-def domains_from_urls(urls):
-    """
-    Function extracting from each url in urls parameter its domain.
-    
-    Params:
-        urls::[iterable]
-            Iterable containing the urls to extract the domains of.
-        
-    Returns:
-        domains::[Counter]
-            Counter with keys the domains and values the number of occurrences of that domain in the urls parameter.
-    """
-    domain_matcher = re.compile(r"^(?:https?:\/\/)?(?:[^@\/\n]+@)?(?:www\.)?(?P<domain>[^:\/?\n]+)")
-    get_domain_from_url = lambda url: domain_matcher.match(url).group('domain')
-    return Counter(get_domain_from_url(url) for url in line['urls'])
-
-
-
-def extract_speaker_features(line, speaker_data, qid_labels, linkcounts, min_age = 5, max_age = 95):
+def extract_speaker_features(line, speaker_data, qid_labels, linkcounts, min_age = 5, max_age = 95, age_bin_size = 10):
     """
     Function extracting the speaker features (age, nationalities, gender, occupations) from the Quotebank line provided as
     parameter and speaker_data dictionary containing several informations about the speaker. The qid_labels parameter is used
@@ -129,16 +108,22 @@ def extract_speaker_features(line, speaker_data, qid_labels, linkcounts, min_age
             Minimum age (inclusive) of speaker for quote to be considered usable.
         max_age::[int | float]
             Maximum age (inclusive) of speaker for quote to be considered usable.
+        age_bin_size::[int]
+            Size of the bins used to discretize age.
 
     Returns:
         features::[dict | None]
-            Dictionary containing the following keys, and their computed values: speaker_gender, speaker_nationality, speaker_occupation.
-            Speaker gender is always one of "male", "female" or "other". Speaker nationality is a dictionary with keys some of the
-            most common nationalities of speakers in the Quotebank dataset and values a boolean to say if the current speaker has that
-            nationality or not. Speaker occupation is a dictionary with keys some of the most common occupations of speakers in the 
-            Quotebank dataset and values a boolean to say if the current speaker has that occupation or not. 
-            This value is be None if any of the speaker features could not be correcly determined, or if the calculated age is outside
-            the range [min_age, max_age].
+            Dictionary containing the following keys, and their computed values: speaker_age_{...}, speaker_genre_{...}, 
+            speaker_nationality_{...}, speaker_occupation_{...}.
+            Speaker age admits multiple suffixes, representing ages in ranges of values going from min_age to max_age with steps
+            of size age_bin_size (exactly one of these keys has value 1). 
+            Speaker gender admits three possible suffixes: "MALE", "FEMALE" or "OTHER" (exactly one of these keys has value 1).
+            Speaker nationality admits multiple suffixes representing some of the most common nationalities of speakers
+            in the Quotebank dataset, where each value is 1 if the speaker has that nationality and 0 otherwise. 
+            Speaker nationality admits multiple suffixes representing some of the most common occupations of speakers
+            in the Quotebank dataset, where each value is 1 if the speaker has that nationality and 0 otherwise.
+            This returned value is be None if any of the speaker features could not be correcly determined, or if the calculated 
+            age is outside the range [min_age, max_age].
     """
     # Convert list of speaker qids into a single value.
     # If several qids possible, choose the one with largest link count.
@@ -157,6 +142,10 @@ def extract_speaker_features(line, speaker_data, qid_labels, linkcounts, min_age
     
     if speaker_age is None or speaker_age < min_age or speaker_age > max_age:
         return
+    
+    for age_range_start in range(min_age, max_age, age_bin_size):
+        age_range_end = age_range_start + age_bin_size
+        features[f'speaker_age_{age_range_start}-{age_range_end}'] = int(age_range_start <= speaker_age < age_range_end)    
         
     # Extract gender of the speaker. Possible genders are summarized in 3 categories: "male", "female", "other".
     speaker_gender_qid = speaker_data.get(line['qids'], {}).get('gender', None)
@@ -180,6 +169,7 @@ def extract_speaker_features(line, speaker_data, qid_labels, linkcounts, min_age
                                  'united kingdom', 'united states of america']
     
     speaker_nationalities = speaker_data.get(line['qids'], {}).get('nationality', None)
+        
     speaker_nationalities = [] if speaker_nationalities is None else speaker_nationalities
     speaker_nationalities = {qid_labels.get(nationality, '').lower() for nationality in speaker_nationalities}
     
@@ -207,6 +197,54 @@ def extract_speaker_features(line, speaker_data, qid_labels, linkcounts, min_age
     for occupation, occupation_aliases in occupations_with_aliases.items():
         features[f'speaker_occupation_{occupation.upper()}'] = int(any(alias in speaker_occupations for alias in occupation_aliases))
                 
+    return features
+
+
+def extract_quote_features(line, short_quote_thr = 11, long_quote_thr = 31):
+    """
+    Function extracting the quote features (length) from the Quotebank line provided as parameter. This function is meant to be called
+    during the pre-processing and as such does not have access to the models which will later be used to extract more advanced features
+    from the quote. This function never returns None.
+    
+    Params:
+        line::[pd.Series]
+            Pandas series containing (at least) the following elements:
+            - quotation: the quotation published in a news article as a string.
+        short_quote_thr::[int]
+            Threshold below which the quote is considered as short (chosen as the 25th percentile of the quote lengths distribution
+            on the dataset).
+        long_quote_thr::[int]
+            Threshold above which the quote is considered as long (chosen as the 75th percentile of the quote lengths distribution
+            on the dataset).
+
+    Returns:
+        features::[dict]
+            Dictionary containing the following keys, and their computed values: quote_lenght_{...}, quotation.
+            Quote length admits three possible suffices: "SHORT", "LONG", "MEDIUM", which discretize the quote length in one of these
+            categories (exactly one of these keys has value 1). 
+            Quotation is exactly the same string as the one retrieved from input line (needed afterwards to extract more complex
+            features from the quote text).
+    """    
+    features = {}
+    
+    # Extract number of words in the quote.
+    number_words_quote = len(line['quotation'].split())
+    if number_words_quote < short_quote_thr:
+        features['quote_lenght_SHORT' ] = 1
+        features['quote_lenght_LONG'  ] = 0
+        features['quote_lenght_MEDIUM'] = 0
+    elif number_words_quote > long_quote_thr:
+        features['quote_lenght_SHORT' ] = 0
+        features['quote_lenght_LONG'  ] = 1
+        features['quote_lenght_MEDIUM'] = 0
+    else:
+        features['quote_lenght_SHORT' ] = 0
+        features['quote_lenght_LONG'  ] = 0
+        features['quote_lenght_MEDIUM'] = 1
+        
+    # Save quote as-is because pre-processing occurrs before BERTopic training.
+    features['quotation'] = line['quotation']
+    
     return features
     
 
@@ -257,10 +295,8 @@ def preprocess_line(line, speaker_data, qid_labels, linkcounts):
     
     preprocessed_line.update(speaker_features)
     
-    # Extract number of words in the quote.
-    preprocessed_line['number_words_quote'] = len(line['quotation'].split())
-    
-    # Save quote as-is because pre-processing occurrs before BERT training.
-    preprocessed_line['quotation'] = line['quotation']
+    # Extract quote information.
+    quote_features = extract_quote_features(line)
+    preprocessed_line.update(quote_features)
     
     return preprocessed_line
