@@ -262,3 +262,15 @@ def plotly_to_svg(fig):
     
     svg_fig_bytes = fig.to_image(format = "svg")
     return SVG(svg_fig_bytes)
+
+
+def plot_alphas_vs_impurity_tree(alphas, impurities):
+    fig, axes = plt.subplots(1, 2, figsize = (15, 5))
+    for ax in axes:
+        ax.plot(alphas, impurities, marker = " ", drawstyle = "steps-post")
+        ax.set_xlabel("Post-pruning alpha")
+        ax.set_ylabel("Total impurity of leaves")
+
+    axes[1].set_xscale('log')   
+    fig.suptitle('Total impurity of leaves vs post-pruning alpha for training set')
+    plt.show()

@@ -534,3 +534,70 @@ def describe_weighted_stats(values, weights, percentiles = []):
     stats_dict['max'] = stats.quantile(1.).item()
     
     return pd.Series(stats_dict)
+
+
+def get_percentile_stratifier(targets, percentile_step = 0.01):
+    """
+    Function returning an encoded version of input array where each sample is assigned a bin and bins are 
+    determined based on the array's distribution percentiles.
+    
+    Params:
+        targets::[np.array]
+            Numpy array that we want to encode using percentile bins. 
+        percentile_step::[float]
+            Step in terms of distribution percentiles between bin edges (smaller values will result in more,
+            smaller bins). Excess bin edges will automatically be removed.
+    
+    Returns:
+        stratifier::[np.array]
+            Encoded version of parameter targets. 
+    """    
+    # Get bin edges from percentiles.
+    bins = np.percentile(targets, np.arange(0, 100, percentile_step), interpolation = 'nearest')
+    
+    # Drop redundant bin edges and sort them.
+    bins = np.unique(bins)
+    
+    # Assign a bin to each value in input array.
+    stratifier = np.digitize(targets, bins)
+
+    return stratifier
+
+
+def remove_quotes_where_feature_is_not_zero(features, num_occurrences, features_cols_titles, feature_col):
+    """
+    Function dropping from the dataset all the samples (rows) in which the value of the feature_col feature
+    is not a zero.
+    
+    Params:
+        features::[np.array | scipy.sparse.matrix]
+            Matrix containing the dataset feature matrix, in which each line is a sample and each column is a feature.
+        num_occurrences::[np.array]
+            Numpy array of shape (n_samples, ) containing the dataset outcome variable.
+        features_cols_titles::[list]
+            The name assigned to each column in the features parameter.
+        feature_col::[str]
+            The name of the feature for which all samples with value not 0 of this feature will be dropped.
+            
+    Returns:
+        features::[np.array | scipy.sparse.matrix]
+            Same matrix as the one passed as parameter, but in which the desired rows (and the feature_col column)
+            have been dropped. 
+        num_occurrences::[np.array]
+            Same array as the one passed as parameter, but in which the desired rows have been dropped. 
+        features_cols_titles::[list]
+            Same list as the one passed as parameter, but in which the feature_col element has been dropped. 
+    """
+    
+    # Remove quotes with value of feature 0.
+    unknown_topic_col = features_cols_titles.index(feature_col)
+    mask_rows = features[:, unknown_topic_col].toarray().ravel() == 0  
+    features = features[mask_rows, :]
+    num_occurrences = num_occurrences[mask_rows]
+    
+    # Remove topic column (useless as all-zeros).
+    mask_cols = np.arange(len(features_cols_titles)) != unknown_topic_col    
+    features = features[:, mask_cols]
+    features_cols_titles.pop(unknown_topic_col)
+    
+    return features, num_occurrences, features_cols_titles
