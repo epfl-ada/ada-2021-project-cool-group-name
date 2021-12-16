@@ -264,7 +264,7 @@ def plotly_to_svg(fig):
             Input figure converted into IPython SVG image.
     """
     svg_fig_bytes = fig.to_image(format = "svg")
-    
+    return SVG(svg_fig_bytes)
     
 def plot_hist(data, color, bins, xlog = False, ylog = False, **kwargs):
     """
