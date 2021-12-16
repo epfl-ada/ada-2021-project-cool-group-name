@@ -1,6 +1,6 @@
 # Increasing the chances of your speech to go viral: an interrogation on what helps catch the attention of modern day fickle newsreaders 
-**Authors:** Andrea Oliveri, Célina Chkroun, Kaourintin Tamine, Mattia Lazzaroni
-
+**Authors:** Andrea Oliveri, CÃ©lina Chkroun, Kaourintin Tamine, Mattia Lazzaroni
+Data story website : https://kaoutamine.github.io/viralSpeech/
 ## Abstract 
 In a world where the internet allows speaking to millions of people, we want to identify what factors can be linked to someone effectively reaching huge audiences. 
 To measure how many people are reached by a quote we will use the number of repetition of said quote in newspapers. 
@@ -89,7 +89,7 @@ By 17/12/2021:
 ## Organization within the team
 Within the team, the organization will be as follow (number refer to those in [Proposed Timeline](#proposed-timeline), note that people will work in parallel on different objectives):
 - *Andrea:* 4, 5, 6, 7, 8
-- *Célina:* 2, 3, 7, 8
+- *CÃ©lina:* 2, 3, 7, 8
 - *Kaourintin:* 1, 4, 7, 8
 - *Mattia:* 5, 6, 7, 8
 
