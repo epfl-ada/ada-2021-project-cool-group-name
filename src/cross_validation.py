@@ -1,12 +1,12 @@
 import time
-from copy import deepcopy
 import numpy as np
 import scipy.stats
 import scipy.sparse
+from copy import deepcopy
 from sklearn.model_selection import StratifiedKFold, train_test_split
 from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeRegressor, DecisionTreeClassifier
-
+from sklearn.dummy import DummyClassifier
 from sklearn.metrics import *
 
 import src.utils as utils
@@ -62,9 +62,39 @@ def _scores_classification(y, preds):
             'f1'        : f1_score(y, preds)}
 
 
+@utils.cache_to_file_pickle("cross_validation-baseline_regression_cv", ignore_kwargs = ['features', 'verbose'])
+def baseline_regression_cv(features, num_occurrences, features_cols_titles, cv_n_splits, verbose = False):
+    
+    num_occurrences = np.array(num_occurrences)
+        
+    print("Training on {} samples with {} features".format(*features.shape))
+        
+    results = []
+    
+    folds_generator = _folds_generator(features, num_occurrences, cv_n_splits, 'regression', verbose)
+    for features_train, features_val, num_occurrences_train, num_occurrences_val in folds_generator:
+        
+        train_mean = num_occurrences_train.mean()
+        
+        current_fold_results = {}
+        
+        for key, X, y in [('train_scores', features_train, num_occurrences_train),
+                          ('val_scores'  , features_val  , num_occurrences_val)]:
+            
+            preds = np.full_like(y, train_mean)
+            
+            current_fold_results[key] = _scores_regression(y, preds)
+            
+        results.append(current_fold_results)
+            
+    return results
+
+
+
+
 
 @utils.cache_to_file_pickle("cross_validation-linear_regression_cv", ignore_kwargs = ['features', 'verbose'])
-def linear_regression_cv(features, num_occurrences, features_cols_titles, cv_n_splits, verbose = True):
+def linear_regression_cv(features, num_occurrences, features_cols_titles, cv_n_splits, verbose = False):
 
     def add_intercept(features, features_cols_titles):
         n_samples, n_features = features.shape
@@ -127,7 +157,7 @@ def linear_regression_cv(features, num_occurrences, features_cols_titles, cv_n_s
 
 
 @utils.cache_to_file_pickle("cross_validation-tree_regression_cv", ignore_kwargs = ['features', 'verbose'])
-def tree_regression_cv(features, num_occurrences, post_pruning_alphas, max_depth, cv_n_splits, verbose = True):
+def tree_regression_cv(features, num_occurrences, post_pruning_alphas, max_depth, cv_n_splits, verbose = False):
     
     num_occurrences = np.array(num_occurrences)
     
@@ -166,8 +196,45 @@ def tree_regression_cv(features, num_occurrences, post_pruning_alphas, max_depth
     return results
 
 
+@utils.cache_to_file_pickle("cross_validation-baseline_classification_cv", ignore_kwargs = ['features', 'verbose'])
+def baseline_classification_cv(features, labels, cv_n_splits, verbose = False):
+    
+    labels = np.array(labels)
+        
+    print("Training on {} samples with {} features".format(*features.shape))
+        
+    strategies = ['uniform', 'stratified', 'constant_0', 'constant_1']
+    results = {strategy: [] for strategy in strategies}
+    
+    folds_generator = _folds_generator(features, labels, cv_n_splits, 'classification', verbose)
+    for features_train, features_val, labels_train, labels_val in folds_generator:
+                
+        for strategy in strategies:
+            current_fold_strategy_results = {}
+            
+            if strategy.startswith('constant'):
+                model = DummyClassifier('constant', constant = int(strategy.split('_')[-1]))
+            else:
+                model = DummyClassifier(strategy)
+
+            model.fit(features_train, labels_train)
+
+            for key, X, y in [('train_scores', features_train, labels_train),
+                              ('val_scores'  , features_val  , labels_val)]:
+
+                preds = model.predict(X)
+
+                current_fold_strategy_results[key] = _scores_classification(y, preds)
+
+            results[strategy].append(current_fold_strategy_results)
+            
+    return results
+
+
+
+
 @utils.cache_to_file_pickle("cross_validation-linear_svm_classification_cv", ignore_kwargs = ['features', 'verbose'])
-def linear_svm_classification_cv(features, labels, balanced_class_weight, cv_n_splits, verbose = True):    
+def linear_svm_classification_cv(features, labels, balanced_class_weight, cv_n_splits, verbose = False):    
     
     labels = np.array(labels)
     
@@ -200,7 +267,7 @@ def linear_svm_classification_cv(features, labels, balanced_class_weight, cv_n_s
 
 
 @utils.cache_to_file_pickle("cross_validation-tree_classification_cv", ignore_kwargs = ['features', 'verbose'])
-def tree_classification_cv(features, labels, post_pruning_alphas, max_depth, cv_n_splits, verbose = True):
+def tree_classification_cv(features, labels, post_pruning_alphas, max_depth, cv_n_splits, verbose = False):
     
     labels = np.array(labels)
     

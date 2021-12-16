@@ -5,8 +5,8 @@ import re
 import time
 import bz2
 import json
-import pandas as pd
 import numpy as np
+import pandas as pd
 from statsmodels.stats.weightstats import DescrStatsW
 
     
