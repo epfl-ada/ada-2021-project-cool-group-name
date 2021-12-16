@@ -11,11 +11,6 @@ from sklearn.metrics import *
 
 import src.utils as utils
 
-
-
-
-
-
     
 def _folds_generator(X, y, cv_n_splits, problem_type, verbose, train_on_single_fold = False):
     stratified_k_folds = StratifiedKFold(n_splits = cv_n_splits, shuffle = True)
@@ -151,7 +146,7 @@ def linear_regression_cv(features, num_occurrences, features_cols_titles, cv_n_s
             
         results.append(current_fold_results)
             
-    return results
+    return results, features_cols_titles
 
 
 

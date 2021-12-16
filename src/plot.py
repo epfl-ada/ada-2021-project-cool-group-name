@@ -2,6 +2,7 @@ from itertools import cycle
 import numpy as np
 import pandas as pd
 import seaborn as sns
+import scipy.stats
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 from IPython.display import SVG
@@ -262,9 +263,7 @@ def plotly_to_svg(fig):
         svg_fig::[IPython.core.display.SVG]
             Input figure converted into IPython SVG image.
     """
-    
     svg_fig_bytes = fig.to_image(format = "svg")
-    return SVG(svg_fig_bytes)    
     
     
 def plot_hist(data, color, bins, xlog = False, ylog = False, **kwargs):
