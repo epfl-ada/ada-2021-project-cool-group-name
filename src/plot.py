@@ -266,6 +266,7 @@ def plotly_to_svg(fig):
     svg_fig_bytes = fig.to_image(format = "svg")
     return SVG(svg_fig_bytes)
     
+    
 def plot_hist(data, color, bins, xlog = False, ylog = False, **kwargs):
     """
     Function allowing to plot an histogram of the provided data as well as a visualization of the mean and std
@@ -330,15 +331,29 @@ def plot_boxplot_for_each_sparse_feature(features, num_occurrences, features_col
                                          figsize = (15, 6), keep_top_n = None, log = False, 
                                          whis = float('inf'), **boxplot_kwargs):
     """
-    Function plotting distribution of parameter num_occurrences for each column in features parameter whose title
+    Function plotting distribution of num_occurrences for each column in features parameter whose title
     starts with features_prefix. The distribution is plotted as boxplots arranged horizontally.
         
     Params:
         features::[np.array | scipy.sparse.matrix]
+            Matrix from which we want to extract the column which we will then use to slice the num_occurrences parameter.
+        num_occurrences::[np.array]
+            Array to show distribution of.
+        features_cols_titles::[list | tuple]
+            List containing the name assigned to each column in features parameter.
+        features_prefix::[str]
+            The prefix of the names of columns we want to extract from features matrix.
+        figsize::[tuple(float, float)]
+            Size of the figure containing all the boxplots.
+        keep_top_n::[int | None]
+            Number of most-frequently occurring features (columns for which the elements are 1) to show in boxplot.
+        log::[bool]
+            Wether to use logarithmic axes for the boxplots.
+        whis::[float]
+            Parameter 'whis' of matplotlib.pyplot.boxplot.
+        boxplot_kwargs::[float]
+            Additional keyword arguments to pass to matplotlib.pyplot.boxplot.
 
-
-
-    
     Returns:
         None
     """
@@ -368,7 +383,33 @@ def plot_boxplot_for_each_sparse_feature(features, num_occurrences, features_col
 def plot_non_overlapped_hist(features, num_occurrences, features_cols_titles, features_prefix, 
                              bins = 250, n_subplots_per_line = 6, val_log = False, count_log = False,
                              keep_top_n = None):
-    
+    """
+    Function plotting distribution of num_occurrences for each column in features parameter whose title
+    starts with features_prefix. The distribution is plotted as histograms on different subplots arranged horizontally.
+        
+    Params:
+        features::[np.array | scipy.sparse.matrix]
+            Matrix from which we want to extract the column which we will then use to slice the num_occurrences parameter.
+        num_occurrences::[np.array]
+            Array to show distribution of.
+        features_cols_titles::[list | tuple]
+            List containing the name assigned to each column in features parameter.
+        features_prefix::[str]
+            The prefix of the names of columns we want to extract from features matrix.
+        bins::[int | iterable]
+            If int, number of bins to use in the histogram. If iterable, numbers representing the breaks in consecutive bins.
+        n_subplots_per_line::[int]
+            Number of histogram subplots to show on each line.
+        val_log::[bool]
+            Wether the axis corresponding to the values of the distribution should use a log scale.
+        count_log::[bool]
+            Wether the axis corresponding to the histogram counts should use a log scale.
+        keep_top_n::[int | None]
+            Number of most-frequently occurring features (columns for which the elements are 1) to show in boxplot.
+        
+    Returns:
+        None
+    """
     distribution_per_discrete_value = get_distribution_per_discrete_value(features, num_occurrences,
                                                                           features_cols_titles, features_prefix,
                                                                           keep_top_n)
@@ -411,6 +452,25 @@ def plot_non_overlapped_hist(features, num_occurrences, features_cols_titles, fe
     
     
 def plot_boxplots_scores_results(results, n_subplots_per_line = 5, limit_between_0_and_1 = False, scores_to_not_show = []):
+    """
+    Function plotting the scores obtained by the models over K-fold cross-validation as subplots of boxplots arranged horizontally.
+    Shows both training and validation scores, for each metric.
+        
+    Params:
+        results::[list[dict]]
+            List of dictionaries. Each element of the list contains the results of one fold in the form of a dictionary with
+            two keys: 'train_scores' and 'val_scores'. The values to this dictionary are also dictionaries, with as keys the name
+            of the score (for exemple: 'mse' or 'r2' or 'accuracy') and as values its numerical value.
+        n_subplots_per_line::[int]
+            Number of boxplot subplots to show on each line.
+        limit_between_0_and_1::[bool]
+            Wether to explicitely limit the boxplot axes between 0 and 1.
+        scores_to_not_show::[iterable]
+            List of names of scores to not draw the distribution across folds of.
+            
+    Returns:
+        None
+    """
     df = pd.DataFrame(results)
 
     train_scores_df = df['train_scores'].apply(pd.Series)
@@ -444,6 +504,22 @@ def plot_boxplots_scores_results(results, n_subplots_per_line = 5, limit_between
     
     
 def plot_boxplots_coefs(results, features_cols_titles, figsize = (15, 300)):
+    """
+    Function plotting the coefficients obtained by training a linear model on each fold of K-fold cross-validation as 
+    a boxplot for each coefficient. 
+    
+    Params:
+        results::[list[dict]]
+            List of dictionaries. Each element of the list contains the coefficients trained during one fold in the form of a
+            dictionary with one key: 'coefs'. The value of this key is an array with the learnt coefficients.
+        features_cols_titles::[list | tuple]
+            List containing the name of the feature corresponding to each learnt coefficient.
+        figsize::[tuple(float, float)]
+            Size of the figure containing all the boxplots.
+            
+    Returns:
+        None
+    """
     plt.figure(figsize = figsize)
     df = pd.DataFrame(results)
 
@@ -464,11 +540,30 @@ def plot_boxplots_coefs(results, features_cols_titles, figsize = (15, 300)):
     plt.grid()
     
     
-    
-    
-    
 def plot_tree_results(results, features_cols_titles, n_subplots_per_line = 3, scores_to_not_show = []):
+    """
+    Function plotting the results obtained by training a decision tree on each fold of K-fold cross-validation, and post-pruning
+    it by different amounts. The results are shown as a lineplot of the mean, min and max score achieved across the different folds
+    against the pruning strength. Each score is in a different subplot.
     
+    Params:
+        results::[list[dict]]
+            List of dictionaries. Each element of the list contains the results of one fold in the form of a dictionary with as
+            key the possible values of pruning parameter alpha which were used (for each fold, the tens of pruning alpha values
+            were used to prune the same base tree and then compute its performance on the validation and train set). Each value
+            of this dict then contains another dict, with two keys: 'train_scores' and 'val_scores'. The values to this 
+            dictionary are also dictionaries, with as keys the name of the score (for exemple: 'mse' or 'r2' or 'accuracy') and 
+            as values its numerical value.
+        features_cols_titles::[list | tuple]
+            List containing the name of the feature corresponding to each learnt coefficient.
+        n_subplots_per_line::[int]
+            Number of boxplot subplots to show on each line.
+        scores_to_not_show::[iterable]
+            List of names of scores to not draw the distribution across folds of.
+            
+    Returns:
+        None
+    """    
     # Reshaping list of dict of dict into a useable dataframe.
     df = pd.concat([pd.DataFrame.from_dict(x, orient='index') for x in results])
     df.index.name = 'pruning_alpha'
