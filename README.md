@@ -1,7 +1,7 @@
+# How can you make your speech go viral?
+**Authors:** Andrea Oliveri, Célina Chkroun, Kaourintin Tamine, Mattia Lazzaroni
 
-# What makes you more likely to become viral
-**Authors:** Andrea Oliveri, C�lina Chkroun, Kaourintin Tamine, Mattia Lazzaroni
-Data story website : https://kaoutamine.github.io/viralSpeech/
+[**Data story website**](https://kaoutamine.github.io/viralSpeech/)
 
 ## Abstract 
 In a world where the internet allows speaking to millions of people, we want to identify what factors can be linked to someone effectively reaching huge audiences. 
@@ -14,11 +14,13 @@ These guidelines would constitute very interesting tools for politicians and inf
 #### Are there any identifiable characteristics of the speaker which make it more "quotable"?
 Age? Gender? Occupation? What characteristics of a speaker make it more likely to reach a larger audience, and what can be changed to increase the quotability. 
 
-#### Does the number of words in a quote or the topic influence its success?
+#### Does the sentiment, topic or number of words of the quote influence its success?
 We will also explore if the textual content of the quote has an impact on the virality. We will mainly investigate two factors: the number of words in the quote and its topic. 
 
-### Is it possible to use some machine learning models (regression, SVMs, trees) to predict virality 
-We want to see how effective these models are at predicting such a complex variable
+#### Is it possible to use some machine learning models to predict virality?
+We want to see how effective these models are at predicting such a complex variable.
+
+
 ## Datasets:
 We have used two separate datasets:
 - [`Quotebank`](https://zenodo.org/record/4277311#.YYpVGWDMJhE): corpus of quotations from news extracted between 2015 and 2020.
@@ -28,7 +30,7 @@ We have used two separate datasets:
 ## Methods
 
 ### 1. Collect data from Wikidata
-To extract all information we will need from Wikidata, the qids of all speakers in Quotebank are collected, as well as the ones for which the quote attribution was ambiguous.
+To extract all information we will need from Wikidata, the qids of all speakers in Quotebank are collected, keeping track of those for which the quote attribution was ambiguous.
 With these we can filter out rows and columns we are not interested in from the provided [`speaker_attributes.parquet`](Data/speaker_attributes.parquet), and query from Wikidata the link counts of ambiguous speakers.
 Finally, we can query Wikidata for human-readable English labels of relevant qids.
 
@@ -38,13 +40,13 @@ Due to the large size and heavy compression of the Quotebank dataset, working wi
 1) Dataset can't be entirely fit in RAM
 2) Parsing dataset requires a long time
 
-Issue 1 was addressed by decompressing and loadinglines from the json files one by one.
+Issue 1 was addressed by decompressing and loading lines from the json files one by one.
 
 Issue 2 was attenuated by implementing a Python decorator storing to disk results of long computation (for a detailed explaination, read the doctring of `cache_to_file_pickle` in [src/utils.py](src/utils.py)).
 
 Note that, after filtering, [`speaker_attributes.parquet`](Data/speaker_attributes.parquet) could easily be kept in RAM while working on Quotebank line by line.
 
-### 3. Exploring the data
+### 3. Features extraction
 
 #### Number of occurences of quotes
 We first analyzed the number of occurences of all the quotes present in Quotebank and defined the threshold above which a quote will be considered as viral.
@@ -62,38 +64,49 @@ However, we found out by implementing this method that it was too computationall
 Upon further research, we stumbled upon a (great) package called [`BERTopic`](https://github.com/MaartenGr/BERTopic)<sup>[1](https://towardsdatascience.com/dynamic-topic-modeling-with-bertopic-e5857e29f872)</sup>, implementing all the tools we needed to quickly extract the main topics present in the Quoteback dataset and visualize them.
 Moreover, part of the computations can be hugely accelerated using a GPU. Training BERTopic on 1% of the dataset we successfully extracted and visualized meaningful topics.
 
-### 4. Training models
-In order to predict the potential of a quote's virality, the following models have been trained:
+#### Quote sentiment
+We used the (also great) package called [`vaderSentiment`](https://github.com/cjhutto/vaderSentiment) to extract the sentiment expressed in the quotes.
 
-Linear and logistic regression, linear Support Vector Machines and we have also tried out a tree based classification. The models were chosen because of their easy interpretability and that our original goal was to see if the typical ML (Not AI) toolbox was sufficient to consistently predict virality from our features.
+
+### 4. Training models
+In order to predict the number of occurrences of a quote, the following models have been trained:
+
+- Linear regression
+- Decision tree regressors (with different post-pruning)
+
+To predict its virality (if it was repeated more than a pre-defined number of times), the following models have been trained:
+
+- Linear Support Vector Machine
+- Decision tree classifiers (with different post-pruning)
+
+These models were chosen because of their easy interpretability. 
 
 To train the models, each line of Quotebank dataset is converted into a feature vector (or discarded if feature is missing) and a binary label for classifiers or an integer output for the regressor. Training is performed on a randomly sampled 70% subset of these lines (this also includes the validation set for hyperparameters tuning) and the rest is used for testing.
 
 
-## Proposed timeline
-By 19/11/2021:
-
-1. Explore further the possible correlations between features
-2. Train BERTopic on larger portion of dataset
-3. Try training BERTopic with parameter `compute_probability=True` such that we can predict not only most likely topic but probability of each topic of each quote
-
-By 01/12/2021:
-
-4. Create feature vectors and labels for quotes in the dataset
-5. Train classifiers and regressor, optimize hyperparameters and analyse performance on test set
-6. Use regularizarion to filter out least relevant features
-
-By 17/12/2021:
-
-7. Draw conclusions, if possible, from learned feature coefficients
-8. Write data story
-
 ## Organization within the team
-Within the team, the organization will be as follow (number refer to those in [Proposed Timeline](#proposed-timeline), note that people will work in parallel on different objectives):
-- *Andrea:* 4, 5, 6, 7, 8
-- *C�lina:* 2, 3, 7, 8
-- *Kaourintin:* 1, 8
-- *Mattia:* 5, 6, 7, 8
+Within the team, the organization was as follows:
+
+|                                                        |  Andrea  |  Célina  | Kaourintin |  Mattia  |
+|--------------------------------------------------------|:--------:|:--------:|:----------:|:--------:|
+| Query Wikidata for additional speaker information      | &#10003; |          |            |          |
+| Join speaker information and Quotebank                 | &#10003; | &#10003; |            |          |
+| Parse Quotebank to collect statistics                  |          | &#10003; |            |          |
+| Create utilitary functions                             | &#10003; |          |            |          |
+| Speaker feature extraction                             | &#10003; |          |            |          |
+| Exploratory data analysis (plots and results analysis) |          | &#10003; |  &#10003;  | &#10003; |
+| Topics detection (BERTopic training and analysis)      | &#10003; |          |  &#10003;  | &#10003; |
+| Sentiment extraction                                   | &#10003; |          |            |          |
+| Feature matrix generation                              | &#10003; |          |            |          |
+| Relationship between features and output               |          | &#10003; |            |          |
+| Choice of machine learning models                      | &#10003; |          |            |          |
+| Notebook machine learning theory                       |          | &#10003; |  &#10003;  |          |
+| Cross-validation results collection                    | &#10003; |          |            | &#10003; |
+| Cross-validation results analysis                      |          |          |  &#10003;  | &#10003; |
+| Data story layout and graphical user interface         |          | &#10003; |            |          |
+| Data story writing                                     | &#10003; |          |  &#10003;  | &#10003; |
+| Interactive plots data story                           |          | &#10003; |            |          |
+| README                                                 | &#10003; | &#10003; |  &#10003;  | &#10003; |
 
 ## Repository structure
 
@@ -103,4 +116,6 @@ Within the team, the organization will be as follow (number refer to those in [P
     - Feature extraction: [feature_extraction.py](src/feature_extraction.py)
     - Visualization: [plot.py](src/plot.py)
     - Management of data: [utils.py](src/utils.py)
+    - Management of sparse matrix data: [utils_sparse_matrix.py](src/utils_sparse_matrix.py)
+    - Cross-validation functions: [cross_validation.py](src/cross_validation.py)
 - [Project.ipynb](Project.ipynb): Notebook in which the analysis is performed.
