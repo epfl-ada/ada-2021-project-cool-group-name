@@ -84,26 +84,26 @@ To train the models, each line of Quotebank dataset is converted into a feature 
 ## Organization within the team
 Within the team, the organization was as follows:
 
-|                                                        |  Andrea |  Célina | Kaourintin |  Mattia |
-|--------------------------------------------------------|:-------:|:-------:|:----------:|:-------:|
-| Query Wikidata for additional speaker information      | &#2714; |         |            |         |
-| Join speaker information dataset and Quotebank         | &#2714; | &#2714; |            |         |
-| Parse Quotebank to collect stats                       |         | &#2714; |            |         |
-| Create utilitary functions                             | &#2714; |         |            |         |
-| Speaker feature extraction                             | &#2714; |         |            |         |
-| Exploratory data analysis (plots and results analysis) |         | &#2714; |   &#2714;  | &#2714; |
-| Topics detection (BERTopic training and analysis)      | &#2714; |         |   &#2714;  | &#2714; |
-| Sentiment extraction                                   | &#2714; |         |            |         |
-| Feature matrix generation                              | &#2714; |         |            |         |
-| Relationship between features and output               |         | &#2714; |            |         |
-| Choice of machine learning models                      | &#2714; |         |            |         |
-| Notebook machine learning theory                       |         | &#2714; |   &#2714;  |         |
-| Cross-validation results collection                    | &#2714; |         |            | &#2714; |
-| Cross-validation results analysis                      |         |         |   &#2714;  | &#2714; |
-| Data story layout and graphical user interface         |         | &#2714; |            |         |
-| Data story writing                                     | &#2714; |         |   &#2714;  | &#2714; |
-| Interactive plots data story                           |         | &#2714; |            |         |
-| README                                                 | &#2714; | &#2714; |   &#2714;  | &#2714; |
+|                                                        |  Andrea  |  Célina  | Kaourintin |  Mattia  |
+|--------------------------------------------------------|:--------:|:--------:|:----------:|:--------:|
+| Query Wikidata for additional speaker information      | &#10003; |          |            |          |
+| Join speaker information dataset and Quotebank         | &#10003; | &#10003; |            |          |
+| Parse Quotebank to collect stats                       |          | &#10003; |            |          |
+| Create utilitary functions                             | &#10003; |          |            |          |
+| Speaker feature extraction                             | &#10003; |          |            |          |
+| Exploratory data analysis (plots and results analysis) |          | &#10003; |  &#10003;  | &#10003; |
+| Topics detection (BERTopic training and analysis)      | &#10003; |          |  &#10003;  | &#10003; |
+| Sentiment extraction                                   | &#10003; |          |            |          |
+| Feature matrix generation                              | &#10003; |          |            |          |
+| Relationship between features and output               |          | &#10003; |            |          |
+| Choice of machine learning models                      | &#10003; |          |            |          |
+| Notebook machine learning theory                       |          | &#10003; |  &#10003;  |          |
+| Cross-validation results collection                    | &#10003; |          |            | &#10003; |
+| Cross-validation results analysis                      |          |          |  &#10003;  | &#10003; |
+| Data story layout and graphical user interface         |          | &#10003; |            |          |
+| Data story writing                                     | &#10003; |          |  &#10003;  | &#10003; |
+| Interactive plots data story                           |          | &#10003; |            |          |
+| README                                                 | &#10003; | &#10003; |  &#10003;  | &#10003; |
 
 ## Repository structure
 
