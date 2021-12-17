@@ -1,5 +1,5 @@
-# Increasing the chances of your speech to go viral: an interrogation on what helps catch the attention of modern day fickle newsreaders 
-**Authors:** Andrea Oliveri, Célina Chkroun, Kaourintin Tamine, Mattia Lazzaroni
+# What makes you easier to quote
+**Authors:** Andrea Oliveri, Cï¿½lina Chkroun, Kaourintin Tamine, Mattia Lazzaroni
 
 ## Abstract 
 In a world where the internet allows speaking to millions of people, we want to identify what factors can be linked to someone effectively reaching huge audiences. 
@@ -15,6 +15,8 @@ Age? Gender? Occupation? What characteristics of a speaker make it more likely t
 #### Does the number of words in a quote or the topic influence its success?
 We will also explore if the textual content of the quote has an impact on the virality. We will mainly investigate two factors: the number of words in the quote and its topic. 
 
+### Is it possible to use some machine learning models (regression, SVMs, trees) to predict virality 
+We want to see how effective these models are at predicting such a complex variable
 ## Datasets:
 We have used two separate datasets:
 - [`Quotebank`](https://zenodo.org/record/4277311#.YYpVGWDMJhE): corpus of quotations from news extracted between 2015 and 2020.
@@ -59,14 +61,12 @@ Upon further research, we stumbled upon a (great) package called [`BERTopic`](ht
 Moreover, part of the computations can be hugely accelerated using a GPU. Training BERTopic on 1% of the dataset we successfully extracted and visualized meaningful topics.
 
 ### 4. Training models
-In order to try to predict the potential of a new quote to be viral, we wanted to both train classifiers for the labels viral/not-viral and a regressor for the number of occurrences.  
+In order to predict the potential of a quote's virality, the following models have been trained:
 
-We though about using Logistic regression and Support vector machines as classifiers for their easy interpretability.
-As regressor, we plan to use Linear regression for the same reason.
+Linear and logistic regression, linear Support Vector Machines and we have also tried out a tree based classification. The models were chosen because of their easy interpretability and that our original goal was to see if the typical ML (Not AI) toolbox was sufficient to consistently predict virality from our features.
 
-To train the models, each line of Quotebank dataset will be converted into a feature vector (or discarded if feature is missing) and a binary label for classifiers or an interger output for the regressor. Training will be performed on a randomly sampled 70% subset of these lines (this also includes the validation set for hyperparameters tuning) and the rest will be used for testing.
+To train the models, each line of Quotebank dataset is converted into a feature vector (or discarded if feature is missing) and a binary label for classifiers or an integer output for the regressor. Training is performed on a randomly sampled 70% subset of these lines (this also includes the validation set for hyperparameters tuning) and the rest is used for testing.
 
-We will then try to see if we can apply weight penalties to filter out the least relevant features.
 
 ## Proposed timeline
 By 19/11/2021:
@@ -89,8 +89,8 @@ By 17/12/2021:
 ## Organization within the team
 Within the team, the organization will be as follow (number refer to those in [Proposed Timeline](#proposed-timeline), note that people will work in parallel on different objectives):
 - *Andrea:* 4, 5, 6, 7, 8
-- *Célina:* 2, 3, 7, 8
-- *Kaourintin:* 1, 4, 7, 8
+- *Cï¿½lina:* 2, 3, 7, 8
+- *Kaourintin:* 1, 8
 - *Mattia:* 5, 6, 7, 8
 
 ## Repository structure
