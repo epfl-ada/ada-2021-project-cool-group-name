@@ -1,9 +1,13 @@
-import matplotlib.pyplot as plt
-import seaborn as sns
-import pandas as pd
+from itertools import cycle
 import numpy as np
+import pandas as pd
+import seaborn as sns
+import scipy.stats
+import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 from IPython.display import SVG
+
+from src.utils_sparse_matrix import get_distribution_per_discrete_value
 
 
     
@@ -259,12 +263,59 @@ def plotly_to_svg(fig):
         svg_fig::[IPython.core.display.SVG]
             Input figure converted into IPython SVG image.
     """
-    
     svg_fig_bytes = fig.to_image(format = "svg")
     return SVG(svg_fig_bytes)
+    
+    
+def plot_hist(data, color, bins, xlog = False, ylog = False, **kwargs):
+    """
+    Function allowing to plot an histogram of the provided data as well as a visualization of the mean and std
+    of the data on top of the same histogram.
+    
+    Params:
+        data::[iterable]
+            Data we wish to plot the histogram of.
+        color::[tuple]
+            Color to use for the histogram.
+        bins::[int | iterable]
+            If int, number of bins to use in the histogram. If iterable, numbers representing the breaks in consecutive bins.
+        xlog::[bool]
+            Boolean describing whether the x-axis should be in log scale.
+        ylog::[bool]
+            Boolean describing whether the x-axis should be in log scale.
+        kwargs::[dict]
+            Any additional arguments which should be passed to sns.histplot call.
+            
+    Returns:
+        bins::[np.array]
+            Bins used in the histogram in the plot.
+    """
+    # Compute hist bins if necessary.
+    if isinstance(bins, int):
+        if xlog:
+            bins = np.linspace(np.log10(data.min()), np.log10(data.max()), bins + 1)
+        else:
+            bins = np.linspace(data.min(), data.max(), bins + 1)
+    
+    # Draw histogram.
+    sns.histplot(data, bins = bins, color = color, log_scale = (xlog, ylog), **kwargs)
+    
+    return bins
 
 
 def plot_alphas_vs_impurity_tree(alphas, impurities):
+    """
+    Function plotting the decision tree's impurities vs post-pruning alphas provided as parameters.
+    
+    Params:
+        alphas::[np.array]
+            Array of post-pruning alphas with which the tree was pruned and for which the pruned tree's impurity was computed.  
+        impurities::[np.array]
+            Array of computed pruned tree's impurity for each value in alphas paramater.
+    
+    Returns:
+        None
+    """
     fig, axes = plt.subplots(1, 2, figsize = (15, 5))
     for ax in axes:
         ax.plot(alphas, impurities, marker = " ", drawstyle = "steps-post")
@@ -274,3 +325,292 @@ def plot_alphas_vs_impurity_tree(alphas, impurities):
     axes[1].set_xscale('log')   
     fig.suptitle('Total impurity of leaves vs post-pruning alpha for training set')
     plt.show()
+
+
+def plot_boxplot_for_each_sparse_feature(features, num_occurrences, features_cols_titles, features_prefix, 
+                                         figsize = (15, 6), keep_top_n = None, log = False, 
+                                         whis = float('inf'), **boxplot_kwargs):
+    """
+    Function plotting distribution of num_occurrences for each column in features parameter whose title
+    starts with features_prefix. The distribution is plotted as boxplots arranged horizontally.
+        
+    Params:
+        features::[np.array | scipy.sparse.matrix]
+            Matrix from which we want to extract the column which we will then use to slice the num_occurrences parameter.
+        num_occurrences::[np.array]
+            Array to show distribution of.
+        features_cols_titles::[list | tuple]
+            List containing the name assigned to each column in features parameter.
+        features_prefix::[str]
+            The prefix of the names of columns we want to extract from features matrix.
+        figsize::[tuple(float, float)]
+            Size of the figure containing all the boxplots.
+        keep_top_n::[int | None]
+            Number of most-frequently occurring features (columns for which the elements are 1) to show in boxplot.
+        log::[bool]
+            Wether to use logarithmic axes for the boxplots.
+        whis::[float]
+            Parameter 'whis' of matplotlib.pyplot.boxplot.
+        boxplot_kwargs::[float]
+            Additional keyword arguments to pass to matplotlib.pyplot.boxplot.
+
+    Returns:
+        None
+    """
+    
+    distribution_per_discrete_value = get_distribution_per_discrete_value(features, num_occurrences,
+                                                                          features_cols_titles, features_prefix,
+                                                                          keep_top_n)
+    
+    name_feature_discrete = features_prefix.replace('_', ' ').title()
+    name_feature_continuous = 'Number of Occurrences'
+
+    plt.figure(figsize = figsize)
+    
+    labels, data = [*zip(*distribution_per_discrete_value.items())]
+    plt.boxplot(data, whis = whis, **boxplot_kwargs)
+    plt.xticks(range(1, len(labels) + 1), labels, rotation = 90)    
+    plt.title(f"Distribution of {name_feature_continuous} for each value of {name_feature_discrete}", pad = 20)    
+    plt.xlabel(name_feature_discrete)
+    plt.ylabel(name_feature_continuous)
+    
+    if log:
+        plt.yscale('log')
+    
+    plt.show()
+    
+    
+def plot_non_overlapped_hist(features, num_occurrences, features_cols_titles, features_prefix, 
+                             bins = 250, n_subplots_per_line = 6, val_log = False, count_log = False,
+                             keep_top_n = None):
+    """
+    Function plotting distribution of num_occurrences for each column in features parameter whose title
+    starts with features_prefix. The distribution is plotted as histograms on different subplots arranged horizontally.
+        
+    Params:
+        features::[np.array | scipy.sparse.matrix]
+            Matrix from which we want to extract the column which we will then use to slice the num_occurrences parameter.
+        num_occurrences::[np.array]
+            Array to show distribution of.
+        features_cols_titles::[list | tuple]
+            List containing the name assigned to each column in features parameter.
+        features_prefix::[str]
+            The prefix of the names of columns we want to extract from features matrix.
+        bins::[int | iterable]
+            If int, number of bins to use in the histogram. If iterable, numbers representing the breaks in consecutive bins.
+        n_subplots_per_line::[int]
+            Number of histogram subplots to show on each line.
+        val_log::[bool]
+            Wether the axis corresponding to the values of the distribution should use a log scale.
+        count_log::[bool]
+            Wether the axis corresponding to the histogram counts should use a log scale.
+        keep_top_n::[int | None]
+            Number of most-frequently occurring features (columns for which the elements are 1) to show in boxplot.
+        
+    Returns:
+        None
+    """
+    distribution_per_discrete_value = get_distribution_per_discrete_value(features, num_occurrences,
+                                                                          features_cols_titles, features_prefix,
+                                                                          keep_top_n)
+    
+    name_feature_discrete = features_prefix.replace('_', ' ').title()
+    name_feature_continuous = 'Number of Occurrences'
+    
+    n_lines = int(np.ceil(len(distribution_per_discrete_value) / n_subplots_per_line))
+    fig, axes = plt.subplots(n_lines, n_subplots_per_line, figsize = (15, 6 * n_lines))
+    axes = axes.ravel()
+    
+    val_min = min(values.min() for values in distribution_per_discrete_value.values())
+    val_max = max(values.max() for values in distribution_per_discrete_value.values())
+    
+    if val_log:
+        bins = np.linspace(np.log10(val_min), np.log10(val_max), bins + 1)
+    else:
+        bins = np.linspace(val_min, val_max, bins + 1)
+        
+    palette = cycle(iter(sns.color_palette()))
+    for i, ((feature_value, distrib), ax) in enumerate(zip(distribution_per_discrete_value.items(), axes)):
+
+        # Draw histogram.
+        sns.histplot(y = distrib, bins = bins, log_scale = (count_log, val_log), color = next(palette), element = "step", ax = ax)
+        
+        ax.set_ylim(bottom = val_min, top = val_max)
+
+        ax.set_title(feature_value, pad = 30)
+                
+        ax.set_ylabel('' if i % n_subplots_per_line else name_feature_continuous)
+            
+        ax.spines['right'].set_visible(False)
+        ax.spines['top'].set_visible(False)
+         
+    for ax in axes[i+1:]:
+        ax.set_axis_off()
+        
+    fig.tight_layout()
+    
+    
+    
+def plot_boxplots_scores_results(results, n_subplots_per_line = 5, limit_between_0_and_1 = False, scores_to_not_show = []):
+    """
+    Function plotting the scores obtained by the models over K-fold cross-validation as subplots of boxplots arranged horizontally.
+    Shows both training and validation scores, for each metric.
+        
+    Params:
+        results::[list[dict]]
+            List of dictionaries. Each element of the list contains the results of one fold in the form of a dictionary with
+            two keys: 'train_scores' and 'val_scores'. The values to this dictionary are also dictionaries, with as keys the name
+            of the score (for exemple: 'mse' or 'r2' or 'accuracy') and as values its numerical value.
+        n_subplots_per_line::[int]
+            Number of boxplot subplots to show on each line.
+        limit_between_0_and_1::[bool]
+            Wether to explicitely limit the boxplot axes between 0 and 1.
+        scores_to_not_show::[iterable]
+            List of names of scores to not draw the distribution across folds of.
+            
+    Returns:
+        None
+    """
+    df = pd.DataFrame(results)
+
+    train_scores_df = df['train_scores'].apply(pd.Series)
+    val_scores_df = df['val_scores'].apply(pd.Series)
+    
+    scores_to_show = [score for score in train_scores_df.columns if score not in scores_to_not_show]
+    
+    n_lines = int(np.ceil(len(scores_to_show) / n_subplots_per_line))
+    fig, axes = plt.subplots(n_lines, n_subplots_per_line, figsize = (15, 5 * n_lines))
+    axes = axes.ravel()
+    
+    for i, (score, ax) in enumerate(zip(scores_to_show, axes)):
+        ax.boxplot([train_scores_df[score], val_scores_df[score]], labels = ["Training Set", "Validation Set"], whis = 1e6)
+        ax.scatter([1] * len(train_scores_df[score]), train_scores_df[score], marker = '.')
+        ax.scatter([2] * len(val_scores_df  [score]), val_scores_df  [score], marker = '.')
+        ax.set_title(score.replace('_', ' ').title(), pad = 30)
+                
+        if not i % n_subplots_per_line:
+            ax.set_ylabel('Score value')
+            
+        ax.spines['right'].set_visible(False)
+        ax.spines['top'].set_visible(False)
+        
+        if limit_between_0_and_1:
+            ax.set_ylim(top = 1, bottom = 0)
+         
+    for ax in axes[i+1:]:
+        ax.set_axis_off()
+        
+    fig.tight_layout()
+    
+    
+def plot_boxplots_coefs(results, features_cols_titles, figsize = (15, 300)):
+    """
+    Function plotting the coefficients obtained by training a linear model on each fold of K-fold cross-validation as 
+    a boxplot for each coefficient. 
+    
+    Params:
+        results::[list[dict]]
+            List of dictionaries. Each element of the list contains the coefficients trained during one fold in the form of a
+            dictionary with one key: 'coefs'. The value of this key is an array with the learnt coefficients.
+        features_cols_titles::[list | tuple]
+            List containing the name of the feature corresponding to each learnt coefficient.
+        figsize::[tuple(float, float)]
+            Size of the figure containing all the boxplots.
+            
+    Returns:
+        None
+    """
+    plt.figure(figsize = figsize)
+    df = pd.DataFrame(results)
+
+    coefs_df = pd.DataFrame(np.vstack(df['coefs'].values), columns = features_cols_titles)
+    
+    pvalues_df = pd.DataFrame(np.vstack(df['pvalues'].values), columns = features_cols_titles)
+    
+    # Combine pvalues across runs by Fisher's method. Ignore warning due to pvalues equal to 0.
+    with np.errstate(divide = 'ignore'):
+        combined_pvalues = pvalues_df.apply(lambda col: scipy.stats.combine_pvalues(col, method='fisher')[1], axis = 0)
+    
+    combined_pvalues = combined_pvalues.sort_values(ascending = False)
+    
+    renamed_cols = {name: f"{name} (combined pvalue: {pvalue:.5f})" for name, pvalue in combined_pvalues.iteritems()}
+    coefs_df = coefs_df[combined_pvalues.index].rename(columns = renamed_cols)
+    
+    plt.boxplot(coefs_df, labels = coefs_df.columns, vert = False, whis = 3)
+    plt.grid()
+    
+    
+def plot_tree_results(results, features_cols_titles, n_subplots_per_line = 3, scores_to_not_show = []):
+    """
+    Function plotting the results obtained by training a decision tree on each fold of K-fold cross-validation, and post-pruning
+    it by different amounts. The results are shown as a lineplot of the mean, min and max score achieved across the different folds
+    against the pruning strength. Each score is in a different subplot.
+    
+    Params:
+        results::[list[dict]]
+            List of dictionaries. Each element of the list contains the results of one fold in the form of a dictionary with as
+            key the possible values of pruning parameter alpha which were used (for each fold, the tens of pruning alpha values
+            were used to prune the same base tree and then compute its performance on the validation and train set). Each value
+            of this dict then contains another dict, with two keys: 'train_scores' and 'val_scores'. The values to this 
+            dictionary are also dictionaries, with as keys the name of the score (for exemple: 'mse' or 'r2' or 'accuracy') and 
+            as values its numerical value.
+        features_cols_titles::[list | tuple]
+            List containing the name of the feature corresponding to each learnt coefficient.
+        n_subplots_per_line::[int]
+            Number of boxplot subplots to show on each line.
+        scores_to_not_show::[iterable]
+            List of names of scores to not draw the distribution across folds of.
+            
+    Returns:
+        None
+    """    
+    # Reshaping list of dict of dict into a useable dataframe.
+    df = pd.concat([pd.DataFrame.from_dict(x, orient='index') for x in results])
+    df.index.name = 'pruning_alpha'
+    df = df.reset_index()
+    
+
+    train_scores_df = df['train_scores'].apply(pd.Series)
+    for col in train_scores_df:
+        df[('train', col)] = train_scores_df[col]
+
+    val_scores_df = df['val_scores'].apply(pd.Series)
+    for col in train_scores_df:
+        df[('val', col)] = val_scores_df[col]
+
+    df = df.drop(columns = ['train_scores', 'val_scores'])
+    scores = train_scores_df.columns.tolist()
+    scores = [score for score in scores if score not in scores_to_not_show]
+
+    n_lines = int(np.ceil(len(scores) / n_subplots_per_line))
+    fig, axes = plt.subplots(n_lines, n_subplots_per_line, figsize = (15, 4 * n_lines))
+    axes = axes.ravel()
+    
+    for i, (score, ax) in enumerate(zip(scores, axes)):
+
+        scores = df[['pruning_alpha', ('train', score), ('val', score)]]        
+        
+        scores = scores.groupby('pruning_alpha').agg(['mean', 'max', 'min'])
+
+        ax.plot(scores.index, scores[('train', score, 'mean')], label = 'Training Set')
+        ax.fill_between(scores.index, scores[('train', score, 'min')], scores[('train', score, 'max')], alpha = 0.3)
+
+        ax.plot(scores.index, scores[('val', score, 'mean')], label = 'Validation Set')
+        ax.fill_between(scores.index, scores[('val', score, 'min')], scores[('val', score, 'max')], alpha = 0.3)
+
+        ax.legend()
+        ax.set_xscale('log')
+        ax.set_xlabel('Post-Pruning Alpha')
+        ax.set_title(score.replace('_', ' ').title())
+        
+        if not i % n_subplots_per_line:
+            ax.set_ylabel('Score value')
+            
+        ax.spines['right'].set_visible(False)
+        ax.spines['top'].set_visible(False)
+        
+    for ax in axes[i+1:]:
+        ax.set_axis_off()    
+       
+    fig.suptitle('Training and Validation scores for different Post-Pruning Alphas', y = 1)
+    fig.tight_layout(h_pad = 4)
