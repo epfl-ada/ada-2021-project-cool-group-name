@@ -30,7 +30,7 @@ We have used two separate datasets:
 ## Methods
 
 ### 1. Collect data from Wikidata
-To extract all information we will need from Wikidata, the qids of all speakers in Quotebank are collected, as well as the ones for which the quote attribution was ambiguous.
+To extract all information we will need from Wikidata, the qids of all speakers in Quotebank are collected, keeping track of those for which the quote attribution was ambiguous.
 With these we can filter out rows and columns we are not interested in from the provided [`speaker_attributes.parquet`](Data/speaker_attributes.parquet), and query from Wikidata the link counts of ambiguous speakers.
 Finally, we can query Wikidata for human-readable English labels of relevant qids.
 
@@ -46,7 +46,7 @@ Issue 2 was attenuated by implementing a Python decorator storing to disk result
 
 Note that, after filtering, [`speaker_attributes.parquet`](Data/speaker_attributes.parquet) could easily be kept in RAM while working on Quotebank line by line.
 
-### 3. Exploring the data
+### 3. Features extraction
 
 #### Number of occurences of quotes
 We first analyzed the number of occurences of all the quotes present in Quotebank and defined the threshold above which a quote will be considered as viral.
@@ -64,17 +64,20 @@ However, we found out by implementing this method that it was too computationall
 Upon further research, we stumbled upon a (great) package called [`BERTopic`](https://github.com/MaartenGr/BERTopic)<sup>[1](https://towardsdatascience.com/dynamic-topic-modeling-with-bertopic-e5857e29f872)</sup>, implementing all the tools we needed to quickly extract the main topics present in the Quoteback dataset and visualize them.
 Moreover, part of the computations can be hugely accelerated using a GPU. Training BERTopic on 1% of the dataset we successfully extracted and visualized meaningful topics.
 
+#### Quote sentiment
+We used the (also great) package called [`vaderSentiment`](https://github.com/cjhutto/vaderSentiment) to extract the sentiment expressed in the quotes.
+
 
 ### 4. Training models
 In order to predict the number of occurrences of a quote, the following models have been trained:
 
 - Linear regression
-- Decision tree regressors (with different post-pruning levels)
+- Decision tree regressors (with different post-pruning)
 
 To predict its virality (if it was repeated more than a pre-defined number of times), the following models have been trained:
 
 - Linear Support Vector Machine
-- Decision tree classifiers (with different post-pruning levels)
+- Decision tree classifiers (with different post-pruning)
 
 These models were chosen because of their easy interpretability. 
 
@@ -87,8 +90,8 @@ Within the team, the organization was as follows:
 |                                                        |  Andrea  |  Célina  | Kaourintin |  Mattia  |
 |--------------------------------------------------------|:--------:|:--------:|:----------:|:--------:|
 | Query Wikidata for additional speaker information      | &#10003; |          |            |          |
-| Join speaker information dataset and Quotebank         | &#10003; | &#10003; |            |          |
-| Parse Quotebank to collect stats                       |          | &#10003; |            |          |
+| Join speaker information and Quotebank                 | &#10003; | &#10003; |            |          |
+| Parse Quotebank to collect statistics                  |          | &#10003; |            |          |
 | Create utilitary functions                             | &#10003; |          |            |          |
 | Speaker feature extraction                             | &#10003; |          |            |          |
 | Exploratory data analysis (plots and results analysis) |          | &#10003; |  &#10003;  | &#10003; |
@@ -113,4 +116,6 @@ Within the team, the organization was as follows:
     - Feature extraction: [feature_extraction.py](src/feature_extraction.py)
     - Visualization: [plot.py](src/plot.py)
     - Management of data: [utils.py](src/utils.py)
+    - Management of sparse matrix data: [utils_sparse_matrix.py](src/utils_sparse_matrix.py)
+    - Cross-validation functions: [cross_validation.py](src/cross_validation.py)
 - [Project.ipynb](Project.ipynb): Notebook in which the analysis is performed.
